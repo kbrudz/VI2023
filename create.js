@@ -110,5 +110,95 @@ function createStreamGraph(delays, temp) {
     
     console.log('here?last');
 }
+
+function createParallelCoords(delays, temp){
+      // set the dimensions and margins of the graph
+    const margin = {top: 30, right: 10, bottom: 10, left: 0},
+    width = 500 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
+
+    // append the svg object to the body of the page
+    const svg = d3.select("#parallelCoords")
+      .append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform",`translate(${margin.left},${margin.top})`);
+
+	// Group the data by ORIGIN_AIRPORT and calculate the sums and means
+	const aggregatedData = d3.rollup(
+		delays,
+		group => ({
+			DEP_DELAY_SUM: d3.sum(group, d => d.DEP_DELAY),
+			ARR_DELAY_SUM: d3.sum(group, d => d.ARR_DELAY),
+			CANCELLED_MEAN: d3.mean(group, d => d.CANCELLED),
+			DIVERTED_MEAN: d3.mean(group, d => d.DIVERTED),
+			ORIGIN_TYPE: group[0].ORIGIN_TYPE, // Assuming it's the same for all entries of the same airport
+			AIRPORT_ELEVATION: Number(group[0].ORIGIN_ELEVATION)
+		}),
+		d => d.ORIGIN_AIRPORT
+	);
+		console.log(aggregatedData);
+	// Convert the aggregated data back to an array for visualization
+	const formattedData = Array.from(aggregatedData, ([key, value]) => ({ ORIGIN_AIRPORT: key, ...value }));
+	console.log(formattedData);
+
+	// Create a scale for each attribute (column)
+	const scales = {};
+	const attributes = ["DEP_DELAY_SUM", "ARR_DELAY_SUM", "CANCELLED_MEAN", "DIVERTED_MEAN", "AIRPORT_ELEVATION"];
+	attributes.forEach(attribute => {
+		scales[attribute] = d3.scaleLinear()
+			.domain([d3.max(d3.extent(formattedData, d => d[attribute])), d3.min(d3.extent(formattedData, d => d[attribute]))])
+			.range([0, height]);
+		if (attribute == "CANCELLED_MEAN" || attribute == "DIVERTED_MEAN")
+		scales[attribute] = d3.scaleLinear()
+			.domain([1,0])
+			.range([0, height]);
+	});
+	
+
+	// Define your axes
+	const axes = attributes;
+	// Build the X scale -> it find the best position for each Y axis
+	x = d3.scalePoint()
+		.range([0, width])
+		.padding(1)
+		.domain(axes);
+
+	function path(d) {
+		return d3.line()(axes.map(function(p) { return [x(p), scales[p](d[p])]; }));
+	}
+	// Create the parallel coordinates lines
+	svg.selectAll(".line")
+		.data(formattedData)
+		.enter()
+    	.append("path")
+		.attr("class", "line")
+		.attr("d", path)
+		// d => {
+		// 	return d3.line()(axes.map(axis => [scales[axis](d[axis]), height]));
+		// })
+		.style("stroke", "gray")
+		.style("stroke-width", 1)
+		.style("fill", "none");
+
+	// Add axes
+	svg.selectAll(".axis")
+		.data(axes)
+		.enter().append("g")
+		.attr("class", "axis")
+		.attr("transform", (d, i) => "translate(" + x(d) + ")")
+		.each(function(d) {
+			d3.select(this).call(d3.axisLeft().scale(scales[d]));
+		});
+
+	// Add labels for ORIGIN_AIRPORT
+	svg.selectAll(".axis")
+		.filter(d => d === "ORIGIN_AIRPORT")
+		.selectAll("text")
+		.attr("transform", "rotate(-45)")
+		.style("text-anchor", "end");
+}
+
   
   

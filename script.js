@@ -20,8 +20,8 @@ function startDashboard() {
         globalDelays = files[0];
         globalTemp = files[1];
         // Create different visualizations using the loaded data.
+        createParallelCoords(files[0], files[1]);
         createStreamGraph(files[0], files[1]);
-        // createScatterPlot(data1, data2);
         // createLineChart(data1, data2);
         // createHistogram(data1, data2);
     }).catch(function(err) {
