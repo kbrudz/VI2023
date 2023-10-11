@@ -1,113 +1,124 @@
+const regions = {"west": ["yellow", ["US-WA","US-OR","US-ID","US-MT","US-WY","US-CA","US-NV","US-UT",
+		"US-CO","US-AK","US-HI","US-AZ","US-NM"]],
+	"south": {"blue": [["US-AR","US-LA","US-TX","US-OK","US-MS","US-AL","US-GA","US-FL","US-SC",
+		"US-NC","US-TN","US-KY","US-WV","US-VA","US-DC","US-DE","US-MD"]]},
+	"midwest": ["green", ["US-ND","US-SD","US-NE","US-KS","US-MN","US-IA","US-MO","US-WI","US-IL",
+		"US-MI","US-IN","US-OH"]],
+	"northeast": ["orange", ["US-PA","US-NY","US-VT","US-NH","US-MA","US-CT","US-ME"]]
+} 
+
 // Function to create a bar chart
 function createStreamGraph(delays, temp) {
     // Select the #streamGraph element and append an SVG to it
     console.log('here1');
 
-    // append the svg object to the body of the page
-    const svg = d3
-        .select("#streamGraph")
-        .append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-        .append("g")
-        .attr("transform", `translate(${margin.left},${margin.top})`);
+	// All of these are different ways of formatting the data in an attempt to make it fit for the area chart
+	const filteredData = delays.filter(function (d) {
+		return (
+			d.DEP_DELAY !== '' &&
+			d.FL_DATE !== '' &&
+			d.ORIGIN_AIRPORT !== ''
+		);
+	});
+	const total_delays = d3.rollups(filteredData, 
+		v => d3.sum(v, d => {
+			if (d.DEP_DELAY >= 0)
+				return d.DEP_DELAY;
+			else return 0;
+		}), 
+		d => d.FL_DATE, d => d.ORIGIN_AIRPORT);
 
-    // // List of groups = header of the csv files
-    // const total_delays = d3.rollups(delays, v => d3.sum(v, d => d.DEP_DELAY), d => d.FL_DATE, d => d.ORIGIN_AIRPORT);
-    // const delayed = [...total_delays].flatMap(([k1, v1]) => [...v1].map(([k2, v2]) => ({date: k1, airport: k2, delay: v2})))
-    // // Add X axis
-    // var x = d3.scaleTime()
-    //     .domain(d3.extent(delayed, function(d) { return d.date; }))
-    //     .range([ 0, width ]);
-    // svg.append("g")
-    //     .attr("transform", "translate(0," + height + ")")
-    //     .call(d3.axisBottom(x).ticks(5));
-    // // console.log('mapping: ', delayed.map(d => console.log(d.delay)));
+	// console.log("total delays: ", total_delays);
+    const data = [...total_delays].flatMap(([k1, v1]) => [...v1].map(([k2, v2]) => ({date: k1, airport: k2, delay: v2})))
+	// list of unique airport names
+	const unique_airports = d3.union(data.map(d => d.airport)) 
     
-    // // Add Y axis
-    // var y = d3.scaleLinear()
-    //     .domain([d3.max(total_delays.map(d => d[1][1][1])), d3.min(total_delays.map(d => d[1][1][1]))])
-    //     .range([ height, 0 ]);
-    // svg.append("g")
-    //     .call(d3.axisLeft(y));
-    // // console.log('total_delays.map( d  => d[1][1])'+ total_delays.map( d  => d[1][1][1]));
+	const aux = new Map();
+	var i = 0;
+	data.forEach(d => {
+        aux.set(i,  {
+			date: d.date,
+			[d.airport]: Math.abs(d.delay)
+		});
+		i++;
+    });
+    const new_data = Array.from(aux, ([key, value]) => value);
+  
+    // Create an object to store the data for each airport
+    const airportData = {};
+    unique_airports.forEach(airport => {
+        airportData[airport] = [];
+    });
+    // Group data by date and airport and sum the delays
+    data.forEach(d => {
+		airportData[d.airport].push({
+			[d.date]: d.date,
+			delay: Math.abs(d.delay)
+		});
+    });
 
-    // // color palette
-    // var color = d3.scaleOrdinal()
-    //     .domain(delayed.map(d => d.airport))
-    //     .range(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf']);
+	const aggregatedData = d3.rollups(
+		delays,
+		group => ({
+			delay: (d3.mean(group, d => +d.DEP_DELAY) + d3.mean(group, d => d.ARR_DELAY))/2,
+			date: group[0].DEP_DELAY
+		}),
+		d => d.ORIGIN_AIRPORT
+	);
 
-    // //stack the data?
-    // const series = d3.stack()
-    //     .offset(d3.stackOffsetWiggle)
-    //     .keys(d3.union(delayed.map(d => d.airport))) // apples, bananas, cherries, …
-    //     .value(([, group], key) => group.get(key)?.delay || '') 
-    //     (total_delays);
-    // console.log('here?', delayed.find(d => d.date && d.airport));
-    
-    // // Show the areas
-    // svg
-    // .selectAll("path")
-    // .data(series)
-    // .enter()
-    // .append("path")
-    //     .style("fill", function(d) { return color(d.key); })
-    //     .attr("d", d3.area()
-    //         .x(function(d, i) { console.log(x(d.delayed)); return x(d?.delayed?.date || ''); })
-    //         .y0(function(d) { return y(d[0]); })
-    //         .y1(function(d) { return y(d[1]); })
-    //     )
-//Read the data
-    const total_delays = d3.rollups(delays, v => d3.sum(v, d => d.DEP_DELAY), d => d.FL_DATE, d => d.ORIGIN_AIRPORT);
-    const delayed = [...total_delays].flatMap(([k1, v1]) => [...v1].map(([k2, v2]) => ({date: k1, airport: k2, delay: v2})))
-    
-    // group the data: one array for each value of the X axis.
-    const sumstat = d3.group(delays, d => d.FL_DATE);
-    console.log(sumstat);
-    // Stack the data: each group will be represented on top of each other
-    const mygroups = d3.union(delayed.map(d => d.airport)) // list of group names
-    const mygroup = d3.union(delayed.map(d => d.date)) // list of group names
-    const stackedData = d3.stack()
-      .keys(mygroup)
-      .value(function(d, key){
-        console.log("d1key ",d[1][key]);
-        return d[1].DEP_DELAY;
-      })
-      (sumstat)
-  
-    // Add X axis --> it is a date format
-    const x = d3.scaleLinear()
-      .domain(d3.extent(delays, function(d) { return d.FL_DATE; }))
-      .range([ 0, width ]);
-    svg.append("g")
-      .attr("transform", `translate(0, ${height})`)
-      .call(d3.axisBottom(x).ticks(5));
-  
-    // Add Y axis
-    const y = d3.scaleLinear()
-      .domain([d3.min(delays, function(d) { return d.DEP_DELAY; }), d3.max(delays, function(d) { return d.DEP_DELAY; })])
-      .range([ height, 0 ]);
-    svg.append("g")
-      .call(d3.axisLeft(y));
-  
-    // color palette
-    const color = d3.scaleOrdinal()
-      .domain(mygroups)
-      .range(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999'])
-  
-    // Show the areas
-    svg
-      .selectAll("mylayers")
-      .data(stackedData)
-      .join("path")
-        // .style("fill", function(d) { n = mygroups[d.key-1] ;  return color(n); })
-        .attr("d", d3.area()
-            .x(function(d, i) { return x(d.delays[0]); })
-            .y0(function(d) { return y(d[0]); })
-            .y1(function(d) { return y(d[1]); })
-      )
-  
-    
+    // set the dimensions and margins of the graph
+	var margin = {top: 20, right: 30, bottom: 30, left: 60},
+	width = 460 - margin.left - margin.right,
+	height = 400 - margin.top - margin.bottom;
+
+	// append the svg object to the body of the page
+	var svg = d3.select("#streamGraph")
+	.append("svg")
+	.attr("width", width + margin.left + margin.right)
+	.attr("height", height + margin.top + margin.bottom)
+	.append("g")
+	.attr("transform",
+		"translate(" + margin.left + "," + margin.top + ")");
+
+	// Add X axis
+	var x = d3.scaleLinear()
+		.domain(d3.extent(new_data, function(d) { return d.date; }))
+		.range([ 0, width ]);
+		svg.append("g")
+		.attr("transform", "translate(0," + height + ")")
+		.call(d3.axisBottom(x).ticks(5));
+
+	// Add Y axis
+	var y = d3.scaleLinear()
+		.domain([-100000, 100000])
+		.range([ height, 0 ]);
+		svg.append("g")
+		.call(d3.axisLeft(y));
+
+	// color palette
+	var color = d3.scaleOrdinal()
+		.domain(unique_airports)
+		.range(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf'])
+
+	//stack the data?
+	var stackedData = d3.stack()
+		.offset(d3.stackOffsetSilhouette)
+		.keys(unique_airports)
+		(new_data)
+
+	// Show the areas
+	svg
+	.selectAll("mylayers")
+	.data(stackedData)
+	.enter()
+	.append("path")
+	.style("fill", function(d) { return color(d.key); })
+	.attr("d", d3.area()
+		.x(function(d, i) { return x(d.date); })
+		.y0(function(d) { return y(d[0]); })
+		.y1(function(d) { return y(d[1]); })
+	)
+
     console.log('here?last');
 }
 
@@ -124,7 +135,7 @@ function createParallelCoords(delays, temp){
       .attr("height", height + margin.top + margin.bottom)
       .append("g")
       .attr("transform",`translate(${margin.left},${margin.top})`);
-
+	console.log(delays);
 	// Group the data by ORIGIN_AIRPORT and calculate the sums and means
 	const aggregatedData = d3.rollup(
 		delays,
@@ -168,12 +179,18 @@ function createParallelCoords(delays, temp){
 	function path(d) {
 		return d3.line()(axes.map(function(p) { return [x(p), scales[p](d[p])]; }));
 	}
+
+	// function colorRegion(d){
+	// 	regions.forEach(d => {
+	// 		if d.
+	// 	})
+	// }
 	// Create the parallel coordinates lines
 	svg.selectAll(".line")
 		.data(formattedData)
 		.enter()
     	.append("path")
-		.attr("class", "line")
+		.attr("class", "line data")
 		.attr("d", path)
 		// d => {
 		// 	return d3.line()(axes.map(axis => [scales[axis](d[axis]), height]));
