@@ -1,11 +1,20 @@
-const regions = {"west": ["yellow", ["US-WA","US-OR","US-ID","US-MT","US-WY","US-CA","US-NV","US-UT",
-		"US-CO","US-AK","US-HI","US-AZ","US-NM"]],
-	"south": {"blue": [["US-AR","US-LA","US-TX","US-OK","US-MS","US-AL","US-GA","US-FL","US-SC",
-		"US-NC","US-TN","US-KY","US-WV","US-VA","US-DC","US-DE","US-MD"]]},
-	"midwest": ["green", ["US-ND","US-SD","US-NE","US-KS","US-MN","US-IA","US-MO","US-WI","US-IL",
-		"US-MI","US-IN","US-OH"]],
-	"northeast": ["orange", ["US-PA","US-NY","US-VT","US-NH","US-MA","US-CT","US-ME"]]
+const stateToRegion = {
+	//West
+	"US-WA":"west","US-OR":"west","US-ID":"west","US-MT":"west","US-WY":"west","US-CA":"west","US-NV":"west",
+	"US-UT":"west", "US-CO":"west","US-AK":"west","US-HI":"west","US-AZ":"west","US-NM":"west",
+	//South
+	"US-AR":"south","US-LA":"south","US-TX":"south","US-OK":"south","US-MS":"south","US-AL":"south",
+	"US-GA":"south","US-FL":"south","US-SC":"south","US-NC":"south","US-TN":"south","US-KY":"south",
+	"US-WV":"south","US-VA":"south","US-DC":"south","US-DE":"south","US-MD":"south",
+	//Midwest
+	"US-ND":"midwest","US-SD":"midwest","US-NE":"midwest","US-KS":"midwest","US-MN":"midwest","US-IA":"midwest",
+	"US-MO":"midwest","US-WI":"midwest","US-IL":"midwest","US-MI":"midwest","US-IN":"midwest","US-OH":"midwest",
+	//Northeast
+	"US-PA":"northeast","US-NY":"northeast","US-VT":"northeast","US-NH":"northeast","US-MA":"northeast",
+	"US-CT":"northeast","US-ME":"northeast"
 } 
+
+const regionColors = { "west":"blue", "south":"red", "midwest":"green", "northeast":"yellow" }
 
 // Function to create a bar chart
 function createStreamGraph(delays, temp) {
@@ -13,26 +22,24 @@ function createStreamGraph(delays, temp) {
     console.log('here1');
 
 	// All of these are different ways of formatting the data in an attempt to make it fit for the area chart
-	const filteredData = delays.filter(function (d) {
-		return (
-			d.DEP_DELAY !== '' &&
-			d.FL_DATE !== '' &&
-			d.ORIGIN_AIRPORT !== ''
-		);
-	});
-	const total_delays = d3.rollups(filteredData, 
-		v => d3.sum(v, d => {
-			if (d.DEP_DELAY >= 0)
-				return d.DEP_DELAY;
-			else return 0;
-		}), 
-		d => d.FL_DATE, d => d.ORIGIN_AIRPORT);
+	const delaysFiltered = delays.filter(
+		d => (d.DEP_DELAY !== '' && d.FL_DATE !== '' && d.ORIGIN_STATE !== '')
+	);
 
-	// console.log("total delays: ", total_delays);
-    const data = [...total_delays].flatMap(([k1, v1]) => [...v1].map(([k2, v2]) => ({date: k1, airport: k2, delay: v2})))
+	const delaysPerDate = d3.rollups(delaysFiltered, 
+		v => d3.sum(v, d => Math.max(d.DEP_DELAY, 0)), 
+		d => d3.timeParse("%Y-%m-%d")(d.FL_DATE),  
+		d => stateToRegion[d.ORIGIN_STATE]
+	).flatMap(
+		([k1, v1]) => [...v1].map(([k2, v2]) => ({date: k1, region: k2, delay: v2}))
+	);
+
+	//console.log("total delays: ", delaysPerDate);
+
+	/*
 	// list of unique airport names
 	const unique_airports = d3.union(data.map(d => d.airport)) 
-    
+
 	const aux = new Map();
 	var i = 0;
 	data.forEach(d => {
@@ -65,6 +72,7 @@ function createStreamGraph(delays, temp) {
 		}),
 		d => d.ORIGIN_AIRPORT
 	);
+	*/
 
     // set the dimensions and margins of the graph
 	var margin = {top: 20, right: 30, bottom: 30, left: 60},
@@ -81,45 +89,49 @@ function createStreamGraph(delays, temp) {
 		"translate(" + margin.left + "," + margin.top + ")");
 
 	// Add X axis
-	var x = d3.scaleLinear()
-		.domain(d3.extent(new_data, function(d) { return d.date; }))
+	var xScale = d3.scaleLinear()
+		.domain(d3.extent(delaysPerDate, d => d.date))
 		.range([ 0, width ]);
 		svg.append("g")
 		.attr("transform", "translate(0," + height + ")")
-		.call(d3.axisBottom(x).ticks(5));
+		.call(d3.axisBottom(xScale).ticks(5));
 
 	// Add Y axis
-	var y = d3.scaleLinear()
-		.domain([-100000, 100000])
+	var yScale = d3.scaleLinear()
+		.domain([0, 100000])
 		.range([ height, 0 ]);
 		svg.append("g")
-		.call(d3.axisLeft(y));
-
-	// color palette
-	var color = d3.scaleOrdinal()
-		.domain(unique_airports)
-		.range(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf'])
+		.call(d3.axisLeft(yScale));
 
 	//stack the data?
 	var stackedData = d3.stack()
 		.offset(d3.stackOffsetSilhouette)
-		.keys(unique_airports)
-		(new_data)
+		.keys(["west","south","midwest","northeast"])(delaysPerDate)
 
+	/*
 	// Show the areas
 	svg
 	.selectAll("mylayers")
 	.data(stackedData)
 	.enter()
 	.append("path")
-	.style("fill", function(d) { return color(d.key); })
+	.style("fill", d => regionColors[d.region])
 	.attr("d", d3.area()
-		.x(function(d, i) { return x(d.date); })
-		.y0(function(d) { return y(d[0]); })
-		.y1(function(d) { return y(d[1]); })
+		.x(function(d, i) { return xScale(d.date); })
+		.y0(yScale(0))
+		.y1( d=> yScale(d[1]) )
 	)
-
-    console.log('here?last');
+	*/
+	
+	// Add the area
+    svg.append("path")
+      .datum(delaysPerDate)
+      .attr("fill", "steelblue")
+      .attr("d", d3.area()
+        .x(function(d) { return xScale(d.date) })
+        .y0(yScale(0))
+        .y1(function(d) { return yScale(d.delay) })
+      )
 }
 
 function createParallelCoords(delays, temp){
