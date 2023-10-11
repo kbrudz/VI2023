@@ -1,11 +1,15 @@
-const regions = {"west": ["yellow", ["US-WA","US-OR","US-ID","US-MT","US-WY","US-CA","US-NV","US-UT",
-		"US-CO","US-AK","US-HI","US-AZ","US-NM"]],
-	"south": {"blue": [["US-AR","US-LA","US-TX","US-OK","US-MS","US-AL","US-GA","US-FL","US-SC",
-		"US-NC","US-TN","US-KY","US-WV","US-VA","US-DC","US-DE","US-MD"]]},
-	"midwest": ["green", ["US-ND","US-SD","US-NE","US-KS","US-MN","US-IA","US-MO","US-WI","US-IL",
-		"US-MI","US-IN","US-OH"]],
-	"northeast": ["orange", ["US-PA","US-NY","US-VT","US-NH","US-MA","US-CT","US-ME"]]
-} 
+ const regions = {"US-WA":"west","US-OR":"west","US-ID":"west","US-MT":"west","US-WY":"west","US-CA":"west",
+	"US-NV":"west","US-UT":"west","US-CO":"west","US-AK":"west","US-HI":"west","US-AZ":"west","US-NM":"west",
+	"US-AR":"south","US-LA":"south","US-TX":"south","US-OK":"south","US-MS":"south","US-AL":"south",
+	"US-GA":"south","US-FL":"south","US-SC":"south","US-NC":"south","US-TN":"south","US-KY":"south",
+	"US-WV":"south","US-VA":"south","US-DC":"south","US-DE":"south","US-MD":"south",
+	"US-ND":"midwest","US-SD":"midwest","US-NE":"midwest","US-KS":"midwest","US-MN":"midwest",
+	"US-IA":"midwest","US-MO":"midwest","US-WI":"midwest","US-IL":"midwest","US-MI":"midwest",
+	"US-IN":"midwest","US-OH":"midwest",
+	"US-PA":"northeast","US-NY":"northeast","US-VT":"northeast","US-NH":"northeast","US-MA":"northeast",
+	"US-CT":"northeast","US-ME":"northeast","US-NJ":"northeast","US-RI":"northeast"
+}
+const colorRegion = {"west":"#F5C225", "south":"#5872F5", "midwest":"#75C700", "northeast":"#F53A29"}
 
 // Function to create a bar chart
 function createStreamGraph(delays, temp) {
@@ -135,7 +139,7 @@ function createParallelCoords(delays, temp){
       .attr("height", height + margin.top + margin.bottom)
       .append("g")
       .attr("transform",`translate(${margin.left},${margin.top})`);
-	console.log(delays);
+	console.log("delays :",delays);
 	// Group the data by ORIGIN_AIRPORT and calculate the sums and means
 	const aggregatedData = d3.rollup(
 		delays,
@@ -145,6 +149,8 @@ function createParallelCoords(delays, temp){
 			CANCELLED_MEAN: d3.mean(group, d => d.CANCELLED),
 			DIVERTED_MEAN: d3.mean(group, d => d.DIVERTED),
 			ORIGIN_TYPE: group[0].ORIGIN_TYPE, // Assuming it's the same for all entries of the same airport
+			ORIGIN_STATE: group[0].ORIGIN_STATE, // Assuming it's the same for all entries of the same airport
+			ORIGIN: group[0].ORIGIN, // Assuming it's the same for all entries of the same airport
 			AIRPORT_ELEVATION: Number(group[0].ORIGIN_ELEVATION)
 		}),
 		d => d.ORIGIN_AIRPORT
@@ -180,35 +186,56 @@ function createParallelCoords(delays, temp){
 		return d3.line()(axes.map(function(p) { return [x(p), scales[p](d[p])]; }));
 	}
 
-	// function colorRegion(d){
-	// 	regions.forEach(d => {
-	// 		if d.
-	// 	})
-	// }
+	// Highlight the specie that is hovered
+	var highlight = function(d){
+		// first every group turns grey
+		d3.selectAll(".line")
+		  .transition().duration(200)
+		  .style("stroke", "lightgrey")
+		  .style("opacity", "0.2");
+		// Second the hovered specie takes its color
+		d3.selectAll(".line." + d.ORIGIN)
+		  .transition().duration(200)
+		  .style("stroke", colorRegion[regions[d.ORIGIN_STATE]])
+		  .style("opacity", "1");
+	  }
+	// Unhighlight
+	var unhighlight = function(d){
+		d3.selectAll(".line")
+			.transition().duration(200).delay(300)
+			.style("stroke", (d) => colorRegion[regions[d.ORIGIN_STATE]])
+			.style("opacity", "1")
+	}
+
 	// Create the parallel coordinates lines
 	svg.selectAll(".line")
 		.data(formattedData)
 		.enter()
     	.append("path")
-		.attr("class", "line data")
+		.attr("class", function (d) { return "line " + d.ORIGIN } ) //
 		.attr("d", path)
-		// d => {
-		// 	return d3.line()(axes.map(axis => [scales[axis](d[axis]), height]));
-		// })
-		.style("stroke", "gray")
+		.style("stroke", (d) => colorRegion[regions[d.ORIGIN_STATE]])
 		.style("stroke-width", 1)
-		.style("fill", "none");
+		.style("fill", "none")
+		.on("mouseover", highlight)
+     	.on("mouseleave", unhighlight );
 
 	// Add axes
 	svg.selectAll(".axis")
-		.data(axes)
-		.enter().append("g")
+		.data(axes).enter()
+		.append("g")
 		.attr("class", "axis")
 		.attr("transform", (d, i) => "translate(" + x(d) + ")")
 		.each(function(d) {
 			d3.select(this).call(d3.axisLeft().scale(scales[d]));
-		});
-
+		})
+		// Add axis title
+		.append("text")
+		  .style("text-anchor", "middle")
+		  .attr("y", -9)
+		  .text(function(d) { return d; })
+		  .style("fill", "black");
+	
 	// Add labels for ORIGIN_AIRPORT
 	svg.selectAll(".axis")
 		.filter(d => d === "ORIGIN_AIRPORT")
