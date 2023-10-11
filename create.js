@@ -1,15 +1,20 @@
- const regions = {"US-WA":"west","US-OR":"west","US-ID":"west","US-MT":"west","US-WY":"west","US-CA":"west",
-	"US-NV":"west","US-UT":"west","US-CO":"west","US-AK":"west","US-HI":"west","US-AZ":"west","US-NM":"west",
+const stateToRegion = {
+	//West
+	"US-WA":"west","US-OR":"west","US-ID":"west","US-MT":"west","US-WY":"west","US-CA":"west","US-NV":"west",
+	"US-UT":"west", "US-CO":"west","US-AK":"west","US-HI":"west","US-AZ":"west","US-NM":"west",
+	//South
 	"US-AR":"south","US-LA":"south","US-TX":"south","US-OK":"south","US-MS":"south","US-AL":"south",
 	"US-GA":"south","US-FL":"south","US-SC":"south","US-NC":"south","US-TN":"south","US-KY":"south",
 	"US-WV":"south","US-VA":"south","US-DC":"south","US-DE":"south","US-MD":"south",
-	"US-ND":"midwest","US-SD":"midwest","US-NE":"midwest","US-KS":"midwest","US-MN":"midwest",
-	"US-IA":"midwest","US-MO":"midwest","US-WI":"midwest","US-IL":"midwest","US-MI":"midwest",
-	"US-IN":"midwest","US-OH":"midwest",
+	//Midwest
+	"US-ND":"midwest","US-SD":"midwest","US-NE":"midwest","US-KS":"midwest","US-MN":"midwest","US-IA":"midwest",
+	"US-MO":"midwest","US-WI":"midwest","US-IL":"midwest","US-MI":"midwest","US-IN":"midwest","US-OH":"midwest",
+	//Northeast
 	"US-PA":"northeast","US-NY":"northeast","US-VT":"northeast","US-NH":"northeast","US-MA":"northeast",
-	"US-CT":"northeast","US-ME":"northeast","US-NJ":"northeast","US-RI":"northeast"
+	"US-CT":"northeast","US-ME":"northeast"
 }
-const colorRegion = {"west":"#F5C225", "south":"#5872F5", "midwest":"#75C700", "northeast":"#F53A29"}
+
+const regionColors = {"west":"#F5C225", "south":"#5872F5", "midwest":"#75C700", "northeast":"#F53A29"}
 
 // Function to create a bar chart
 function createStreamGraph(delays, temp) {
@@ -17,26 +22,24 @@ function createStreamGraph(delays, temp) {
     console.log('here1');
 
 	// All of these are different ways of formatting the data in an attempt to make it fit for the area chart
-	const filteredData = delays.filter(function (d) {
-		return (
-			d.DEP_DELAY !== '' &&
-			d.FL_DATE !== '' &&
-			d.ORIGIN_AIRPORT !== ''
-		);
-	});
-	const total_delays = d3.rollups(filteredData, 
-		v => d3.sum(v, d => {
-			if (d.DEP_DELAY >= 0)
-				return d.DEP_DELAY;
-			else return 0;
-		}), 
-		d => d.FL_DATE, d => d.ORIGIN_AIRPORT);
+	const delaysFiltered = delays.filter(
+		d => (d.DEP_DELAY !== '' && d.FL_DATE !== '' && d.ORIGIN_STATE !== '')
+	);
 
-	// console.log("total delays: ", total_delays);
-    const data = [...total_delays].flatMap(([k1, v1]) => [...v1].map(([k2, v2]) => ({date: k1, airport: k2, delay: v2})))
+	const delaysPerDate = d3.rollups(delaysFiltered, 
+		v => d3.sum(v, d => Math.max(d.DEP_DELAY, 0)), 
+		d => d3.timeParse("%Y-%m-%d")(d.FL_DATE),  
+		d => stateToRegion[d.ORIGIN_STATE]
+	).flatMap(
+		([k1, v1]) => [...v1].map(([k2, v2]) => ({date: k1, region: k2, delay: v2}))
+	);
+
+	//console.log("total delays: ", delaysPerDate);
+
+	/*
 	// list of unique airport names
 	const unique_airports = d3.union(data.map(d => d.airport)) 
-    
+
 	const aux = new Map();
 	var i = 0;
 	data.forEach(d => {
@@ -69,6 +72,7 @@ function createStreamGraph(delays, temp) {
 		}),
 		d => d.ORIGIN_AIRPORT
 	);
+	*/
 
     // set the dimensions and margins of the graph
 	var margin = {top: 20, right: 30, bottom: 30, left: 60},
@@ -85,51 +89,55 @@ function createStreamGraph(delays, temp) {
 		"translate(" + margin.left + "," + margin.top + ")");
 
 	// Add X axis
-	var x = d3.scaleLinear()
-		.domain(d3.extent(new_data, function(d) { return d.date; }))
+	var xScale = d3.scaleLinear()
+		.domain(d3.extent(delaysPerDate, d => d.date))
 		.range([ 0, width ]);
 		svg.append("g")
 		.attr("transform", "translate(0," + height + ")")
-		.call(d3.axisBottom(x).ticks(5));
+		.call(d3.axisBottom(xScale).ticks(5));
 
 	// Add Y axis
-	var y = d3.scaleLinear()
-		.domain([-100000, 100000])
+	var yScale = d3.scaleLinear()
+		.domain([0, 100000])
 		.range([ height, 0 ]);
 		svg.append("g")
-		.call(d3.axisLeft(y));
-
-	// color palette
-	var color = d3.scaleOrdinal()
-		.domain(unique_airports)
-		.range(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf'])
+		.call(d3.axisLeft(yScale));
 
 	//stack the data?
 	var stackedData = d3.stack()
 		.offset(d3.stackOffsetSilhouette)
-		.keys(unique_airports)
-		(new_data)
+		.keys(["west","south","midwest","northeast"])(delaysPerDate)
 
+	/*
 	// Show the areas
 	svg
 	.selectAll("mylayers")
 	.data(stackedData)
 	.enter()
 	.append("path")
-	.style("fill", function(d) { return color(d.key); })
+	.style("fill", d => regionColors[d.region])
 	.attr("d", d3.area()
-		.x(function(d, i) { return x(d.date); })
-		.y0(function(d) { return y(d[0]); })
-		.y1(function(d) { return y(d[1]); })
+		.x(function(d, i) { return xScale(d.date); })
+		.y0(yScale(0))
+		.y1( d=> yScale(d[1]) )
 	)
-
-    console.log('here?last');
+	*/
+	
+	// Add the area
+    svg.append("path")
+      .datum(delaysPerDate)
+      .attr("fill", "steelblue")
+      .attr("d", d3.area()
+        .x(function(d) { return xScale(d.date) })
+        .y0(yScale(0))
+        .y1(function(d) { return yScale(d.delay) })
+      )
 }
 
 function createParallelCoords(delays, temp){
       // set the dimensions and margins of the graph
     const margin = {top: 30, right: 10, bottom: 10, left: 0},
-    width = 500 - margin.left - margin.right,
+    width = 600 - margin.left - margin.right,
     height = 400 - margin.top - margin.bottom;
 
     // append the svg object to the body of the page
@@ -196,14 +204,14 @@ function createParallelCoords(delays, temp){
 		// Second the hovered specie takes its color
 		d3.selectAll(".line." + d.ORIGIN)
 		  .transition().duration(200)
-		  .style("stroke", colorRegion[regions[d.ORIGIN_STATE]])
+		  .style("stroke", regionColors[stateToRegion[d.ORIGIN_STATE]])
 		  .style("opacity", "1");
 	  }
 	// Unhighlight
 	var unhighlight = function(d){
 		d3.selectAll(".line")
 			.transition().duration(200).delay(300)
-			.style("stroke", (d) => colorRegion[regions[d.ORIGIN_STATE]])
+			.style("stroke", (d) => regionColors[stateToRegion[d.ORIGIN_STATE]])
 			.style("opacity", "1")
 	}
 
@@ -214,7 +222,7 @@ function createParallelCoords(delays, temp){
     	.append("path")
 		.attr("class", function (d) { return "line " + d.ORIGIN } ) //
 		.attr("d", path)
-		.style("stroke", (d) => colorRegion[regions[d.ORIGIN_STATE]])
+		.style("stroke", (d) => regionColors[stateToRegion[d.ORIGIN_STATE]])
 		.style("stroke-width", 1)
 		.style("fill", "none")
 		.on("mouseover", highlight)
@@ -244,5 +252,209 @@ function createParallelCoords(delays, temp){
 		.style("text-anchor", "end");
 }
 
+
+function createChordDiagram(delays,regions) {
+    console.log('Inside createChordDiagram:', delays, regions);
+
+	    // Obliczenie rozmiarów SVG
+    const svgWidth = 600;
+    const svgHeight = 600;
+    const margin = { top: 20, right: 20, bottom: 20, left: 20 };
+    const width = svgWidth - margin.left - margin.right;
+    const height = svgHeight - margin.top - margin.bottom;
+
+    // Ustalenie promienia wewnętrznego i zewnętrznego diagramu Chord
+    const outerRadius = Math.min(width, height) * 0.5 - 40;
+    const innerRadius = outerRadius - 30;
+
+    const svg = d3
+      .select("#chordDiagram")
+      .append("svg")
+      .attr("width", svgWidth)
+      .attr("height", svgHeight)
+      .append("g")
+      .attr("transform", `translate(${width / 2},${height / 2})`);
+
+	const total_delays = d3.rollup(
+		delays,
+		(v) => d3.sum(v, (d) => +d.DEP_DELAY), // Sum of departure delays
+		(d) => d.ORIGIN_STATE,
+		(d) => d.DEST_STATE
+	  );
+	const delayed = Array.from(total_delays, ([date, originState, destState, delay]) => {
+		if (originState && destState) {
+		  return {
+			date,
+			originState,
+			destState,
+			delay,
+		  };
+		}
+		return null; // Lub możesz zdecydować, co zrobić z nieprawidłowymi danymi.
+	  }).filter((data) => data !== null); 
+	  
+
+    // Get unique states as regions
+	const uniqueRegions = Array.from(new Set([...total_delays.keys()]));
+	const matrix = uniqueRegions.map((originState) =>
+	  uniqueRegions.map((destState) => total_delays.get(originState)?.get(destState) || 0)
+	);
+    delayed.forEach((d) => {
+      const i = uniqueRegions.indexOf(d.originState);
+      const j = uniqueRegions.indexOf(d.destState);
+	  if (i !== -1 && j !== -1) {
+		matrix[i][j] += d.delay;
+	  } else {
+		console.log(`Invalid indices for originState: ${d.originState} and destState: ${d.destState}`);
+	  }
+	});
+
+    const chord = d3
+      .chord()
+      .padAngle(0.05)
+      .sortSubgroups(d3.descending)
+      .sortChords(d3.descending)
+      (matrix);
+
+    const arc = d3.arc()
+      .innerRadius(200)
+      .outerRadius(210);
+
+    const ribbon = d3.ribbon()
+      .radius(200)
+      .padAngle(0.05)
+      .startAngle((d) => d.startAngle)
+      .endAngle((d) => d.endAngle)
+      .source((d) => d.source)
+      .target((d) => d.target)
+      .radius(200);
+
+    const gradient = svg.append("defs")
+      .append("linearGradient")
+      .attr("id", "gradient")
+      .selectAll("stop")
+      .data(chord)
+      .join("stop")
+      .attr("offset", (d) => Math.round(d.source.startAngle * 100) / 100)
+      .attr("stop-color", (d) => d3.interpolateSpectral(d.source.index / 10));
+
+    svg
+      .datum(chord)
+      .append("g")
+      .selectAll("path")
+      .data((d) => d)
+      .join("path")
+      .attr("d", ribbon)
+      .attr("fill", "url(#gradient)")
+      .attr("stroke", "black")
+      .style("stroke-width", "0.5px")
+      .style("opacity", 0.7);
+
+    // Add the groups on the outer part of the circle
+    svg
+      .datum(chord)
+      .append("g")
+      .selectAll("g")
+      .data((d) => d.groups)
+      .join("g")
+      .append("path")
+      .attr("fill", (d) => {
+        const state = uniqueRegions[d.index];
+        return getRegionColor(state);
+      })
+      .attr("stroke", "black")
+      .attr("d", arc)
+      .style("stroke-width", "0.5px")
+      .style("opacity", 0.7);
+
+    // Add the labels
+    svg
+      .datum(chord)
+      .append("g")
+      .selectAll("g")
+      .data((d) => d.groups)
+      .join("g")
+      .append("text")
+      .attr("x", 6)
+      .attr("dy", 15)
+      .append("textPath")
+      .attr("href", "#gradient")
+      .text((d) => {
+        const state = uniqueRegions[d.index];
+        return state;
+      })
+      .attr("font-size", "12px")
+      .attr("fill", "black")
+      .style("opacity", 0.7);
+
+    svg
+      .append("text")
+      .attr("x", 0)
+      .attr("y", -160)
+      .attr("font-size", "20px")
+      .attr("font-weight", "bold")
+      .attr("text-anchor", "middle")
+      .text("Chord Diagram of Delays Between Regions")
+      .attr("fill", "black")
+      .style("opacity", 0.7);
+
+    svg
+      .append("text")
+      .attr("x", 0)
+      .attr("y", -130)
+      .attr("font-size", "15px")
+      .attr("text-anchor", "middle")
+      .text("December 2015")
+      .attr("fill", "black")
+      .style("opacity", 0.7);
+
+    const size = 20;
+    svg
+      .selectAll("mydots")
+      .data(Object.values(regions))
+      .join("rect")
+      .attr("x", 100)
+      .attr("y", (d, i) => 100 + i * (size + 5))
+      .attr("width", size)
+      .attr("height", size)
+      .style("fill", (d) => Array.isArray(d[0]) ? d[0][0] : d[0])
+      .style("opacity", 0.7);
+
+    svg
+      .selectAll("mylabels")
+      .data(Object.values(regions))
+      .join("text")
+      .attr("x", 100 + size * 1.2)
+      .attr("y", (d, i) => 100 + i * (size + 5) + size / 2)
+      .style("fill", (d) => Array.isArray(d[0]) ? d[0][0] : d[0])
+      .text((d) => Array.isArray(d[1]) ? (d[1].map(subArr => subArr[0]).join(", ")) : "")
+      .attr("text-anchor", "left")
+      .style("alignment-baseline", "middle")
+      .attr("font-size", "15px")
+      .style("opacity", 0.7);
+
+    svg
+      .append("text")
+      .attr("x", 0)
+      .attr("y", 160)
+      .attr("font-size", "15px")
+      .attr("text-anchor", "middle")
+      .text("Source: Bureau of Transportation Statistics")
+      .attr("fill", "black")
+      .style("opacity", 0.7);
+	  console.log();
+  }
+
+  function getRegionColor(state) {
+	for (const region in globalRegions) {
+	  if (Object.hasOwnProperty.call(globalRegions, region)) {
+		const regionStates = globalRegions[region][1];
+		if (Array.isArray(regionStates) && regionStates.includes(state)) {
+		  return globalRegions[region][0];
+		}
+	  }
+	}
+	return "gray";
+  }
   
   

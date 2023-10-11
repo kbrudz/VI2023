@@ -16,8 +16,7 @@
       }
       .dashboard > :nth-child(1),
       .dashboard > :nth-child(2),
-      .dashboard > :nth-child(3),
-      .dashboard > :nth-child(4) {
+      .dashboard > :nth-child(3) {
         display: flex;
         justify-content: center;
         align-items: center;
@@ -44,20 +43,18 @@
   <body onload="startDashboard()">
     <!-- Buttons to update the data visualization -->
     <div class="button-container">
-      <button onclick="updateIdioms('old')">Old Data</button>
-      <button onclick="updateIdioms('new')">New Data</button>
-      <button onclick="updateIdioms('all')">All Data</button>
+      <button onclick="updateIdioms('Arrival')">Arr Data</button>
+      <button onclick="updateIdioms('Departures')">Dep Data</button>
+      <button onclick="updateIdioms('All')">All Data</button>
     </div>
     <!-- The main grid layout of the dashboard -->
     <div class="dashboard">
       <!-- Visualization area for the bar chart -->
       <div class="visualization" id="streamGraph"></div>
       <!-- Visualization area for the scatter plot -->
-      <div class="visualization" id="parallelCoords"></div>
+      <div class="visualization" id="chordDiagram"></div>
       <!-- Visualization area for the line chart -->
-      <div class="visualization" id="lineChart"></div>
-      <!-- Visualization area for the fourth visualization (not specified in the code) -->
-      <div class="visualization" id="histogram"></div>
+      <div class="visualization" id="parallelCoords"></div>
     </div>
   </body>
 </html>
