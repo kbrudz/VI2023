@@ -12,7 +12,7 @@ const stateToRegion = {
 	//Northeast
 	"US-PA":"northeast","US-NY":"northeast","US-VT":"northeast","US-NH":"northeast","US-MA":"northeast",
 	"US-CT":"northeast","US-ME":"northeast"
-} 
+}
 
 const regionColors = { "west":"blue", "south":"red", "midwest":"green", "northeast":"yellow" }
 

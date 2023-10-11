@@ -12,7 +12,7 @@ const height = 400 - margin.top - margin.bottom;
 function startDashboard() {
     // Load the both CSV files using D3.csv
     Promise.all([
-        d3.csv("./december_delays_final.csv"),
+        d3.csv("./december_delays.csv"),
         d3.csv("./december_temperatures.csv"),
     ]).then(function(files) {
         // files[0] will contain december_delays.csv and files[1] will contain december_temperatures.csv
@@ -28,7 +28,7 @@ function startDashboard() {
         selectedRegions = ["west", "south", "midwest", "northeast"];
         // Create different visualizations using the loaded data.
         createParallelCoords(files[0], files[1]);
-        //createStreamGraph(files[0], files[1]);
+        createStreamGraph(files[0], files[1]);
         createChordDiagram(files[0], globalRegions);
         // createLineChart(data1, data2);
         // createHistogram(data1, data2);
