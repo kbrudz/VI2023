@@ -1,3 +1,13 @@
+//exploring interactivity for parallel coords
+var dragging = {},
+    foreground,
+    background,
+    highlighted,
+    dimensions,                           
+    legend,
+    brush_count = 0,
+    excluded_groups = [];
+
 const stateToRegion = {
 	//West
 	"US-WA":"west","US-OR":"west","US-ID":"west","US-MT":"west","US-WY":"west","US-CA":"west","US-NV":"west",
@@ -11,7 +21,7 @@ const stateToRegion = {
 	"US-MO":"midwest","US-WI":"midwest","US-IL":"midwest","US-MI":"midwest","US-IN":"midwest","US-OH":"midwest",
 	//Northeast
 	"US-PA":"northeast","US-NY":"northeast","US-VT":"northeast","US-NH":"northeast","US-MA":"northeast",
-	"US-CT":"northeast","US-ME":"northeast"
+	"US-CT":"northeast","US-ME":"northeast", "US-NJ":"northeast","US-RI":"northeast"
 }
 
 const regionColors = {"west":"#F5C225", "south":"#5872F5", "midwest":"#75C700", "northeast":"#F53A29"}
@@ -135,19 +145,24 @@ function createStreamGraph(delays, temp) {
 }
 
 function createParallelCoords(delays, temp){
+
+	// TODO: 
+	// Highlight regions
+	// fix update
+
       // set the dimensions and margins of the graph
     const margin = {top: 30, right: 10, bottom: 10, left: 0},
     width = 600 - margin.left - margin.right,
     height = 400 - margin.top - margin.bottom;
 
     // append the svg object to the body of the page
-    const svg = d3.select("#parallelCoords")
-      .append("svg")
-      .attr("width", width + margin.left + margin.right)
-      .attr("height", height + margin.top + margin.bottom)
-      .append("g")
-      .attr("transform",`translate(${margin.left},${margin.top})`);
-	console.log("delays :",delays);
+    // const svg = d3.select("#parallelCoords")
+    //   .append("svg")
+    //   .attr("width", width + margin.left + margin.right)
+    //   .attr("height", height + margin.top + margin.bottom)
+    //   .append("g")
+    //   .attr("transform",`translate(${margin.left},${margin.top})`);
+	// console.log("delays :",delays);
 	// Group the data by ORIGIN_AIRPORT and calculate the sums and means
 	const aggregatedData = d3.rollup(
 		delays,
@@ -168,88 +183,223 @@ function createParallelCoords(delays, temp){
 	const formattedData = Array.from(aggregatedData, ([key, value]) => ({ ORIGIN_AIRPORT: key, ...value }));
 	console.log(formattedData);
 
-	// Create a scale for each attribute (column)
-	const scales = {};
+	// Define your dimensions
 	const attributes = ["DEP_DELAY_SUM", "ARR_DELAY_SUM", "CANCELLED_MEAN", "DIVERTED_MEAN", "AIRPORT_ELEVATION"];
-	attributes.forEach(attribute => {
-		scales[attribute] = d3.scaleLinear()
-			.domain([d3.max(d3.extent(formattedData, d => d[attribute])), d3.min(d3.extent(formattedData, d => d[attribute]))])
+	const dimensions = ["DEP_DELAY_SUM", "ARR_DELAY_SUM", "CANCELLED_MEAN", "DIVERTED_MEAN", "AIRPORT_ELEVATION"];
+	origDimensions = dimensions.slice(0);
+	const y = {};
+	dimensions.forEach(dim => {
+		y[dim] = d3.scaleLinear()
+			.domain([d3.max(d3.extent(formattedData, d => d[dim])), d3.min(d3.extent(formattedData, d => d[dim]))])
 			.range([0, height]);
-		if (attribute == "CANCELLED_MEAN" || attribute == "DIVERTED_MEAN")
-		scales[attribute] = d3.scaleLinear()
+		if (dim == "CANCELLED_MEAN" || dim == "DIVERTED_MEAN")
+		y[dim] = d3.scaleLinear()
 			.domain([1,0])
 			.range([0, height]);
 	});
-	
 
-	// Define your axes
-	const axes = attributes;
-	// Build the X scale -> it find the best position for each Y axis
-	x = d3.scalePoint()
-		.range([0, width])
-		.padding(1)
-		.domain(axes);
+	extents = dimensions.map(function(p) { return [0,0]; });
 
-	function path(d) {
-		return d3.line()(axes.map(function(p) { return [x(p), scales[p](d[p])]; }));
-	}
+	var x = d3.scalePoint().rangeRound([0, width]).padding(1).domain(dimensions),
+		dragging = {};
 
-	// Highlight the specie that is hovered
-	var highlight = function(d){
+	var line = d3.line(),
+		axis = d3.axisLeft(),
+		background,
+		foreground,
+		origDimensions;
+
+	var svg = d3.select("#parallelCoords").append("svg")
+		.attr("width", width + margin.left + margin.right)
+		.attr("height", height + margin.top + margin.bottom)
+	  	.append("g")
+		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+	// Extract the list of dimensions and create a scale for each.
+	// x.domain(dimensions = d3.keys(cars[0]).filter(function(d) {
+	// return d != "name" && (y[d] = d3.scale.linear()
+	// 	.domain(d3.extent(cars, function(p) { return +p[d]; }))
+	// 	.range([height, 0]));
+	// }));
+	// Add grey background lines for context.
+	background = svg.append("g")
+		.attr("class", "background")
+		.selectAll("path")
+		.data(formattedData)
+		.enter().append("path")
+		.attr("d", path);
+	// Add blue foreground lines for focus.
+	foreground = svg.append("g")
+		.attr("class", "foreground")
+		.selectAll("path")
+		.data(formattedData)
+		.enter().append("path")
+		.attr("d", path)
+		.style("stroke", (d) => regionColors[stateToRegion[d.ORIGIN_STATE]])
+		.style("stroke-width", 1)
+		.style("fill", "none");
+	// Add a group element for each dimension.
+	var g = svg.selectAll(".dimension")
+		.data(dimensions)
+		.enter().append("g")
+		.attr("class", "dimension")
+		.attr("transform", function(d) { return "translate(" + x(d) + ")"; })
+		.call(d3.drag()
+			.subject(function(d) { return {x: x(d)}; })
+			.on("start", function(d) {
+				dragging[d] = x(d);
+				background.attr("visibility", "hidden");
+			})
+			.on("drag", function(event, d) {
+				dragging[d] = Math.min(width, Math.max(0, event.x));
+				foreground.attr("d", path);
+				dimensions.sort(function(a, b) { 
+					return position(a) - position(b); 
+				});
+				x.domain(dimensions);
+				g.attr("transform", function(d) { return "translate(" + position(d) + ")"; })
+				console.log("dragging")
+			})
+			.on("end", function(d) {
+				delete dragging[d];
+				// transition(d3.select(this)).attr("transform", "translate(" + x(d) + ")");
+				transition(foreground).attr("d", path);
+				background
+					.attr("d", path)
+				  	.transition()
+					.delay(500)
+					.duration(0)
+					.attr("visibility", null);
+					
+					var new_extents = [];
+					for(var i=0;i<dimensions.length;++i){
+						new_extents.push(extents[origDimensions.indexOf(dimensions[i])]);
+					  }
+					  extents = new_extents;
+					  origDimensions = dimensions.slice(0);
+			}));
+
+		// Add an axis and title.
+		var g = svg.selectAll(".dimension");
+		g.append("g")
+			.attr("class", "axis")
+			.each(function(d) {  d3.select(this).call(d3.axisLeft(y[d]));})
+			//text does not show up because previous line breaks somehow
+			.append("text")
+			.attr("fill", "black")
+			.style("text-anchor", "middle")
+			.attr("y", -9) 
+			.text(function(d) { return d; });
+
+		// Add and store a brush for each axis.
+		g.append("g")
+			.attr("class", "brush")
+			.each(function(d) {
+				console.log("brush?: ", y[d].name);
+				if(y[d].name == 'scale'){
+				// console.log(this);
+				d3.select(this)
+					.call(y[d].brush = d3.brushY()
+						.extent([[-8, 0], [8,height]])
+						.on("start", brushstart)
+						.on("brush", brushing))
+						.on("end", brushend);
+				}
+			})
+			.selectAll("rect")
+			.attr("x", -8)
+			.attr("width", 16);  
+
+	// TODO: Highlight the specie that is hovered
+	function highlight (d){
+		console.log("highlight", d.ORIGIN);
 		// first every group turns grey
 		d3.selectAll(".line")
 		  .transition().duration(200)
 		  .style("stroke", "lightgrey")
 		  .style("opacity", "0.2");
 		// Second the hovered specie takes its color
-		d3.selectAll(".line." + d.ORIGIN)
+		d3.selectAll("." + d.ORIGIN)
 		  .transition().duration(200)
 		  .style("stroke", regionColors[stateToRegion[d.ORIGIN_STATE]])
 		  .style("opacity", "1");
 	  }
 	// Unhighlight
-	var unhighlight = function(d){
+	function unhighlight(d){
+		console.log("unhighlight", d.ORIGIN);
 		d3.selectAll(".line")
-			.transition().duration(200).delay(300)
+			.transition().duration(200).delay(200)
 			.style("stroke", (d) => regionColors[stateToRegion[d.ORIGIN_STATE]])
 			.style("opacity", "1")
 	}
+	// Returns the path for a given data point.
+	function path(d) {
+		return line(dimensions.map(function(p) { return [position(p), y[p](d[p])]; }));
+	}
+	function position(d) {
+		var v = dragging[d];
+		return v == null ? x(d) : v;
+	}
+	function transition(g) {
+		return g.transition().duration(500);
+	}
+	function brushstart(event) {
+		event.sourceEvent.stopPropagation();  
+	}
+	// Handles a brush event, toggling the display of foreground lines.
+	function brushing(event) {
+		// var actives = dimensions.filter(function(p) { return !y[p].brush.selection === null; }),
+		// 	extents = actives.map(function(p) { return y[p].brush.selection.map(y.invert); });
+		// foreground.style("display", function(d) {
+		// 	return actives.every(function(p, i) {
+		// 		return extents[i][0] <= d[p] && d[p] <= extents[i][1];
+		// 	}) ? null : "none";
+		// });
+		for(var i=0;i<dimensions.length;++i){
+			if(event.target==y[dimensions[i]].brush) {
+				  extents[i]=event.selection.map(y[dimensions[i]].invert,y[dimensions[i]]);
+				  }
+		}
+		foreground.style("display", function(d) {
+			return dimensions.every(function(p, i) {
+				if(extents[i][0]==0 && extents[i][0]==0) {
+					return true;
+				}
+			return extents[i][1] <= d[p] && d[p] <= extents[i][0];
+			}) ? null : "none";
+		}); 
+		console.log("brushing");
+	}
+	function brushend(event) {
+		if (event.defaultPrevented) return; // click suppressed
+	}
+	// function dragstart(d) {
+	// 	d3.select(this).raise()
+	// 	dragging[d] = x(d);
+	// 	background.attr("visibility", "hidden");
+	// 	console.log("dragstart please");
+	// }
+	// function dragging(d) {
+	// 	dragging[d] = Math.min(width, Math.max(0, d3.event.x));
+	// 	foreground.attr("d", path);
+	// 	dimensions.sort(function(a, b) { return position(a) - position(b); });
+	// 	x.domain(dimensions);
+	// 	g.attr("transform", function(d) { return "translate(" + position(d) + ")"; })
+	// 	console.log("drag please");
+	// }
+	// function dragend(d){
+	// 	delete dragging[d];
+	// 	transition(d3.select(this)).attr("transform", "translate(" + x(d) + ")");
+	// 	transition(foreground).attr("d", path);
+	// 	background
+	// 		.attr("d", path)
+	// 		.transition()
+	// 		.delay(500)
+	// 		.duration(0)
+	// 		.attr("visibility", null);
+	// 	console.log("dragend please");
+	// }
 
-	// Create the parallel coordinates lines
-	svg.selectAll(".line")
-		.data(formattedData)
-		.enter()
-    	.append("path")
-		.attr("class", function (d) { return "line " + d.ORIGIN } ) //
-		.attr("d", path)
-		.style("stroke", (d) => regionColors[stateToRegion[d.ORIGIN_STATE]])
-		.style("stroke-width", 1)
-		.style("fill", "none")
-		.on("mouseover", highlight)
-     	.on("mouseleave", unhighlight );
-
-	// Add axes
-	svg.selectAll(".axis")
-		.data(axes).enter()
-		.append("g")
-		.attr("class", "axis")
-		.attr("transform", (d, i) => "translate(" + x(d) + ")")
-		.each(function(d) {
-			d3.select(this).call(d3.axisLeft().scale(scales[d]));
-		})
-		// Add axis title
-		.append("text")
-		  .style("text-anchor", "middle")
-		  .attr("y", -9)
-		  .text(function(d) { return d; })
-		  .style("fill", "black");
-	
-	// Add labels for ORIGIN_AIRPORT
-	svg.selectAll(".axis")
-		.filter(d => d === "ORIGIN_AIRPORT")
-		.selectAll("text")
-		.attr("transform", "rotate(-45)")
-		.style("text-anchor", "end");
 }
 
 

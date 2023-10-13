@@ -2,7 +2,7 @@
 var globalDelays, globalTemp, globalRegions;
 
 // Define margins for the visualizations. 
-const margin = { top: 20, right: 20, bottom: 50, left: 80 };
+const margin = {top: 30, right: 10, bottom: 10, left: 0};
 
 // Calculate the width and height of the visualizations based on the margins.
 const width = 600 - margin.left - margin.right;
@@ -40,31 +40,29 @@ function startDashboard() {
 }
 
 // // This function updates the visualizations based on the selected data type.
-// function updateIdioms(delays, temp) {
-//   const colorRegion = {"west":"#F5C225", "south":"#5872F5", "midwest":"#75C700", "northeast":"#F53A29"}
+function updateIdioms(data) {
 
-//   // Use a switch statement to check which data type is selected.
-//   switch (delays) {
-//     case "west":
-//         // If "old" is selected, update the visualizations with data before or equal to 2010.
-//         updateParallel(globalData.filter((item) => regions[item.ORIGIN_AIRPORT] == "west"));
-//         updateScatterPlot(globalData.filter((item) => item.oscar_year <= 2010));
-//         updateLineChart(globalData.filter((item) => item.oscar_year <= 2010));
-//         updateHistogram(globalData.filter((item) => item.oscar_year <= 2010));
-//         break;
-//     case "new":
+  // Use a switch statement to check which data type is selected.
+  switch (data) {
+    case "west":
+        // If "old" is selected, update the visualizations with data before or equal to 2010.
+        updateParallel(globalDelays.filter((item) => stateToRegion[item.ORIGIN_STATE] === "west"));
+        break;
+    case "south":
 //       // If "new" is selected, update the visualizations with data after 2010.
-//       updateBarChart(globalData.filter((item) => item.oscar_year > 2010));
-//       updateScatterPlot(globalData.filter((item) => item.oscar_year > 2010));
-//       updateLineChart(globalData.filter((item) => item.oscar_year > 2010));
-//       updateHistogram(globalData.filter((item) => item.oscar_year > 2010));
-//       break;
-//     default:
+        updateParallel(globalDelays.filter((item) => stateToRegion[item.ORIGIN_STATE] === "south"));
+        break;
+    case "midwest":
+        // If "old" is selected, update the visualizations with data before or equal to 2010.
+        updateParallel(globalDelays.filter((item) => stateToRegion[item.ORIGIN_STATE] === "midwest"));
+        break;
+    case "northeast":
+//       // If "new" is selected, update the visualizations with data after 2010.
+        updateParallel(globalDelays.filter((item) => stateToRegion[item.ORIGIN_STATE] === "northeast"));
+        break;
+    default:
 //       // If no specific data type is selected, update the visualizations with all the data.
-//       updateBarChart(globalData);
-//       updateScatterPlot(globalData);
-//       updateLineChart(globalData);
-//       updateHistogram(globalData);
-//       break;
-//   }
-// }
+        updateParallel(globalDelays);
+        break;
+  }
+}
