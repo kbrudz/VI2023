@@ -363,210 +363,166 @@ function createParallelCoords(delays, temp){
 		if (event.defaultPrevented) return; // click suppressed
 	}
 }
+function createChordDiagram(delays, temp) {
 
 
-function createChordDiagram(delays,regions) {
-    console.log('Inside createChordDiagram:', delays, regions);
+    console.log('Inside createChordDiagram:', delays, temp);
 
-	    // Obliczenie rozmiarów SVG
     const svgWidth = 600;
     const svgHeight = 500;
     const margin = { top: 10, right: 10, bottom: 10, left: 0 };
     const width = svgWidth - margin.left - margin.right;
     const height = svgHeight - margin.top - margin.bottom;
 
-    // Ustalenie promienia wewnętrznego i zewnętrznego diagramu Chord
     const outerRadius = width * 0.5 - 40;
     const innerRadius = outerRadius - 30;
 
     const svg = d3
-      .select("#chordDiagram")
-      .append("svg")
-      .attr("width", svgWidth)
-      .attr("height", svgHeight)
-      .append("g")
-      .attr("transform", `translate(${width / 2},${(height+width) / 4})`);
+        .select("#chordDiagram")
+        .append("svg")
+        .attr("width", svgWidth)
+        .attr("height", svgHeight)
+        .append("g")
+        .attr("transform", `translate(${width / 2},${(height+width) / 4})`);
 
-	const total_delays = d3.rollup(
-		delays,
-		(v) => d3.sum(v, (d) => +d.DEP_DELAY), // Sum of departure delays
-		(d) => d.ORIGIN_STATE,
-		(d) => d.DEST_STATE
-	  );
-	const delayed = Array.from(total_delays, ([date, originState, destState, delay]) => {
-		if (originState && destState) {
-		  return {
-			date,
-			originState,
-			destState,
-			delay,
-		  };
-		}
-		return null; // Lub możesz zdecydować, co zrobić z nieprawidłowymi danymi.
-	  }).filter((data) => data !== null); 
-	  
+    const total_delays = d3.rollup(
+        delays,
+        (v) => d3.sum(v, (d) => +d.DEP_DELAY),
+        (d) => d.ORIGIN_STATE,
+        (d) => d.DEST_STATE
+    );
 
-    // Get unique states as regions
-	const uniqueRegions = Array.from(new Set([...total_delays.keys()]));
-	const matrix = uniqueRegions.map((originState) =>
-	  uniqueRegions.map((destState) => total_delays.get(originState)?.get(destState) || 0)
-	);
+    const delayed = Array.from(total_delays, ([originState, destState, delay]) => {
+        if (originState && destState) {
+            return {
+                originState,
+                destState,
+                delay,
+            };
+        }
+        return null;
+    }).filter((data) => data !== null);
+
+    const uniqueRegions = Array.from(new Set([...total_delays.keys()]));
+
+    const matrix = uniqueRegions.map((originState) =>
+        uniqueRegions.map((destState) => total_delays.get(originState)?.get(destState) || 0)
+    );
+
     delayed.forEach((d) => {
-      const i = uniqueRegions.indexOf(d.originState);
-      const j = uniqueRegions.indexOf(d.destState);
-	  if (i !== -1 && j !== -1) {
-		matrix[i][j] += d.delay;
-	  } else {
-		console.log(`Invalid indices for originState: ${d.originState} and destState: ${d.destState}`);
-	  }
-	});
+        const i = uniqueRegions.indexOf(d.originState);
+        const j = uniqueRegions.indexOf(d.destState);
+        if (i !== -1 && j !== -1) {
+            matrix[i][j] += d.delay;
+        } else {
+            console.log(`Invalid indices for originState: ${d.originState} and destState: ${d.destState}`);
+        }
+    });
 
     const chord = d3
-      .chord()
-      .padAngle(0.05)
-      .sortSubgroups(d3.descending)
-      .sortChords(d3.descending)
-      (matrix);
+        .chord()
+        .padAngle(0.05)
+        .sortSubgroups(d3.descending)
+        .sortChords(d3.descending)
+        (matrix);
 
     const arc = d3.arc()
-      .innerRadius(200)
-      .outerRadius(210);
+        .innerRadius(200)
+        .outerRadius(210);
 
     const ribbon = d3.ribbon()
-      .radius(200)
-      .padAngle(0.05)
-      .startAngle((d) => d.startAngle)
-      .endAngle((d) => d.endAngle)
-      .source((d) => d.source)
-      .target((d) => d.target)
-      .radius(200);
+        .radius(200)
+        .padAngle(0.05)
+        .startAngle((d) => d.startAngle)
+        .endAngle((d) => d.endAngle)
+        .source((d) => d.source)
+        .target((d) => d.target)
+        .radius(200);
 
     const gradient = svg.append("defs")
-      .append("linearGradient")
-      .attr("id", "gradient")
-      .selectAll("stop")
-      .data(chord)
-      .join("stop")
-      .attr("offset", (d) => Math.round(d.source.startAngle * 100) / 100)
-      .attr("stop-color", (d) => d3.interpolateSpectral(d.source.index / 10));
+        .append("linearGradient")
+        .attr("id", "gradient")
+        .selectAll("stop")
+        .data(chord)
+        .join("stop")
+        .attr("offset", (d) => Math.round(d.source.startAngle * 100) / 100)
+        .attr("stop-color", (d) => d3.interpolateSpectral(d.source.index / 10));
 
     svg
-      .datum(chord)
-      .append("g")
-      .selectAll("path")
-      .data((d) => d)
-      .join("path")
-      .attr("d", ribbon)
-      .attr("fill", "url(#gradient)")
-      .attr("stroke", "black")
-      .style("stroke-width", "0.5px")
-      .style("opacity", 0.7);
-
-    // Add the groups on the outer part of the circle
-    svg
-      .datum(chord)
-      .append("g")
-      .selectAll("g")
-      .data((d) => d.groups)
-      .join("g")
-      .append("path")
-      .attr("fill", (d) => {
-        const state = uniqueRegions[d.index];
-        return getRegionColor(state);
-      })
-      .attr("stroke", "black")
-      .attr("d", arc)
-      .style("stroke-width", "0.5px")
-      .style("opacity", 0.7);
-
-    // Add the labels
-    svg
-      .datum(chord)
-      .append("g")
-      .selectAll("g")
-      .data((d) => d.groups)
-      .join("g")
-      .append("text")
-      .attr("x", 6)
-      .attr("dy", 15)
-      .append("textPath")
-      .attr("href", "#gradient")
-      .text((d) => {
-        const state = uniqueRegions[d.index];
-        return state;
-      })
-      .attr("font-size", "12px")
-      .attr("fill", "black")
-      .style("opacity", 0.7);
+        .datum(chord)
+        .append("g")
+        .selectAll("path")
+        .data((d) => d)
+        .join("path")
+        .attr("d", ribbon)
+        .attr("fill", "url(#gradient)")
+        .attr("stroke", "black")
+        .style("stroke-width", "0.5px")
+        .style("opacity", 0.7);
 
     svg
-      .append("text")
-      .attr("x", 0)
-      .attr("y", -160)
-      .attr("font-size", "20px")
-      .attr("font-weight", "bold")
-      .attr("text-anchor", "middle")
-      .text("Chord Diagram of Delays Between Regions")
-      .attr("fill", "black")
-      .style("opacity", 0.7);
+        .datum(chord)
+        .append("g")
+        .selectAll("g")
+        .data((d) => d.groups)
+        .join("g")
+        .append("path")
+        .attr("fill", (d) => {
+            const state = uniqueRegions[d.index];
+            const region = stateToRegion[state];
+            return regionColors[region];
+        })
+        .attr("stroke", "black")
+        .attr("d", arc)
+        .style("stroke-width", "0.5px")
+        .style("opacity", 0.7);
 
+    // Dodaj etykiety
     svg
-      .append("text")
-      .attr("x", 0)
-      .attr("y", -130)
-      .attr("font-size", "15px")
-      .attr("text-anchor", "middle")
-      .text("December 2015")
-      .attr("fill", "black")
-      .style("opacity", 0.7);
+        .datum(chord)
+        .append("g")
+        .selectAll("g")
+        .data((d) => d.groups)
+        .join("g")
+        .append("text")
+        .attr("x", 6)
+        .attr("dy", 15)
+        .append("textPath")
+        .attr("href", "#gradient")
+        .text((d) => {
+            const state = uniqueRegions[d.index];
+            return state;
+        })
+        .attr("font-size", "12px")
+        .attr("fill", "black")
+        .style("opacity", 0.7);
 
-    const size = 20;
-    svg
-      .selectAll("mydots")
-      .data(Object.values(regions))
-      .join("rect")
-      .attr("x", 100)
-      .attr("y", (d, i) => 100 + i * (size + 5))
-      .attr("width", size)
-      .attr("height", size)
-      .style("fill", (d) => Array.isArray(d[0]) ? d[0][0] : d[0])
-      .style("opacity", 0.7);
-
-    svg
-      .selectAll("mylabels")
-      .data(Object.values(regions))
-      .join("text")
-      .attr("x", 100 + size * 1.2)
-      .attr("y", (d, i) => 100 + i * (size + 5) + size / 2)
-      .style("fill", (d) => Array.isArray(d[0]) ? d[0][0] : d[0])
-      .text((d) => Array.isArray(d[1]) ? (d[1].map(subArr => subArr[0]).join(", ")) : "")
-      .attr("text-anchor", "left")
-      .style("alignment-baseline", "middle")
-      .attr("font-size", "15px")
-      .style("opacity", 0.7);
-
-    svg
-      .append("text")
-      .attr("x", 0)
-      .attr("y", 160)
-      .attr("font-size", "15px")
-      .attr("text-anchor", "middle")
-      .text("Source: Bureau of Transportation Statistics")
-      .attr("fill", "black")
-      .style("opacity", 0.7);
-	  console.log();
-  }
-
-  function getRegionColor(state) {
-	for (const region in globalRegions) {
-	  if (Object.hasOwnProperty.call(globalRegions, region)) {
-		const regionStates = globalRegions[region][1];
-		if (Array.isArray(regionStates) && regionStates.includes(state)) {
-		  return globalRegions[region][0];
-		}
-	  }
-	}
-	return "gray";
-  }
-  
-  
+		//add legend and title
+		
+	const size = 20;
+	const xOffset = 185; 
+	
+	svg
+		.selectAll("mydots")
+		.data(Object.values(regionColors))
+		.join("rect")
+		.attr("x", xOffset) 
+		.attr("y", (d, i) => 100 + i * (size + 5))
+		.attr("width", size)
+		.attr("height", size)
+		.style("fill", (d) => d)
+		.style("opacity", 0.7);
+	
+	svg
+		.selectAll("mylabels")
+		.data(Object.keys(regionColors))
+		.join("text")
+		.attr("x", xOffset + size * 1.2) 
+		.attr("y", (d, i) => 100 + i * (size + 5) + size / 2)
+		.text((d) => d)
+		.attr("font-size", "15px")
+		.style("fill", "black")
+		.style("alignment-baseline", "middle")
+		.style("opacity", 0.7);
+	
+}
