@@ -29,7 +29,7 @@ const regionColors = {"west":"#F5C225", "south":"#5872F5", "midwest":"#75C700", 
 // Function to create a bar chart
 function createStreamGraph(delays, temp) {
     // Select the #streamGraph element and append an SVG to it
-    console.log('here1');
+    // console.log('here1');
 
 	// All of these are different ways of formatting the data in an attempt to make it fit for the area chart
 	const delaysFiltered = delays.filter(
@@ -43,6 +43,16 @@ function createStreamGraph(delays, temp) {
 	).flatMap(
 		([k1, v1]) => [...v1].map(([k2, v2]) => ({date: k1, region: k2, delay: v2}))
 	);
+	const temperature = d3.rollups(
+		temp,
+		group => ({
+			avgTempC: d3.mean(group, d => d.AvgTemperatureC),
+			avgTempF: d3.mean(group, d => d.AvgTemperatureF),
+		}),
+		d => d.Date
+	).flatMap(
+		([k1, v1]) => ({date: k1, avgTempC: v1.avgTempC, avgTempF: v1.avgTempF}));
+	// console.log("temp: ",temperature);
 
 	//console.log("total delays: ", delaysPerDate);
 
@@ -97,15 +107,13 @@ function createStreamGraph(delays, temp) {
 	.attr("height", height + margin.top + margin.bottom)
 	.append("g")
 	.attr("transform",
-		"translate(" + margin.left + "," + margin.top + ")");
+		"translate(" + margin.left + "," + margin.top + ")")
+	.attr('viewBox', '0 0 600 400');
 
 	// Add X axis
 	var xScale = d3.scaleLinear()
 		.domain(d3.extent(delaysPerDate, d => d.date))
 		.range([ 0, width ]);
-		svg.append("g")
-		.attr("transform", "translate(0," + height + ")")
-		.call(d3.axisBottom(xScale).ticks(5));
 
 	// Add Y axis
 	var yScale = d3.scaleLinear()
@@ -134,15 +142,82 @@ function createStreamGraph(delays, temp) {
 	)
 	*/
 	
+	var temperatureValues = d3.map(temperature, d => d.avgTempC);
+	var color = d3.scaleLinear()
+		.range(["red", "#ffefef", "blue"])
+		.domain([d3.min(temperatureValues),(d3.min(temperatureValues)+d3.min(temperatureValues)/2), d3.max(temperatureValues)]);
+	var days = d3.map(temperature, d => new Date(d.date).getDate());
+	var dates = d3.map(temperature, d => d.date);
+
+	// Build X scales and axis:
+	var x = d3.scaleBand()
+		.range([ 0, width ])
+		.domain(dates)
+		.padding(0.01);
+		var xDays = d3.scaleBand()
+		.range([ 0, width ])
+		.domain(days)
+		.padding(0.01);
+	svg.append("g")
+		.attr("transform", "translate(0," + height + ")")
+		.call(d3.axisBottom(xDays));
+	// console.log("x", [d3.min(temperature, d => d.avgTempC),d3.max(temperature, d => d.avgTempC)]);
+
+	svg.selectAll()
+      .data(temperature, function(d) {return d.date+':'+d.avgTempC;})
+      .enter()
+      .append("rect")
+      .attr("fill", (d) => color(d.avgTempC))
+      .attr("x", function(d) {return x(d.date) })
+    //   .attr("y", function(d) { return y(d.avgTempC) })
+      .attr("width", x.bandwidth() )
+      .attr("height", height );
+
 	// Add the area
-    svg.append("path")
-      .datum(delaysPerDate)
-      .attr("fill", "steelblue")
-      .attr("d", d3.area()
-        .x(function(d) { return xScale(d.date) })
-        .y0(yScale(0))
-        .y1(function(d) { return yScale(d.delay) })
-      )
+	svg.append("path")
+		.datum(delaysPerDate)
+		.attr("fill", "steelblue")
+		.attr("d", d3.area()
+		  .x(function(d) { return xScale(d.date) })
+		  .y0(yScale(0))
+		  .y1(function(d) { return yScale(d.delay) })
+		)
+	
+	// svg.append("g")
+	// 	.attr("transform", "translate(0," + height + ")")
+	// 	.call(d3.axisBottom(xScale).ticks(5));
+
+	// svg.append("g")
+	// 	.attr("class", "legendQuant")
+	// 	.attr("transform", "translate("+ width +",0)");
+
+	// const g = svg.append('g')
+	// 	.attr('transform', `translate(${margin.left},${margin.top})`);
+
+	// const squareSize = 14;
+	// const legend = g.append('g')
+	// 	.attr('font-family', 'sans-serif');
+	// // create one g for each entry in the color scale
+	// const cell = legend.selectAll('g')
+	//   .data(color.domain())
+	//   .join('g');
+	// add the text label for each entry
+	// cell.append('text')
+	// 	.attr('dominant-baseline', 'middle')
+	// 	.attr('x', squareSize * 1.5)
+	// 	.attr('y', squareSize / 2)
+	// 	.text(d => d);
+
+	// position the cells
+	// let xPosition = 0;
+
+	// cell.each(function(d, i) {
+    //     d3.select(this)
+    //         .attr('transform', `translate(${xPosition})`);
+	// 	xPosition += (this.getBBox().width + squareSize);
+	// });
+	// svg.select(".legendQuant")
+	// 	.call(legend);
 }
 
 function createParallelCoords(delays, temp){
@@ -173,10 +248,10 @@ function createParallelCoords(delays, temp){
 		}),
 		d => d.ORIGIN_AIRPORT
 	);
-		console.log(aggregatedData);
+		// console.log(aggregatedData);
 	// Convert the aggregated data back to an array for visualization
 	const formattedData = Array.from(aggregatedData, ([key, value]) => ({ ORIGIN_AIRPORT: key, ...value }));
-	console.log(formattedData);
+	// console.log(formattedData);
 
 	// Define your dimensions
 	const dimensions = ["DEP_DELAY_SUM", "ARR_DELAY_SUM", "CANCELLED_MEAN", "DIVERTED_MEAN", "AIRPORT_ELEVATION"];
@@ -232,7 +307,7 @@ function createParallelCoords(delays, temp){
 		// .on("mouseout.second", unhighlight)
 		;
 	// Add a group element for each dimension.
-	console.log("dim: ",dimensions);
+	// console.log("dim: ",dimensions);
 	var g = svg.selectAll(".dimension")
 		.data(dimensions)
 		.enter().append("g")
@@ -253,7 +328,7 @@ function createParallelCoords(delays, temp){
 				});
 				x.domain(dimensions);
 				g.attr("transform", function(d) { return "translate(" + position(d) + ")"; })
-				console.log("dragging")
+				// console.log("dragging")
 			})
 			.on("end", function(d) {
 				delete dragging[d];
@@ -290,7 +365,7 @@ function createParallelCoords(delays, temp){
 		g.append("g")
 			.attr("class", "brush")
 			.each(function(d) {
-				console.log("brush?: ", y[d].name);
+				// console.log("brush?: ", y[d].name);
 				if(y[d].name == 'scale'){
 				// console.log(this);
 				d3.select(this)
@@ -307,7 +382,7 @@ function createParallelCoords(delays, temp){
 
 	// TODO: Highlight the specie that is hovered
 	function highlight (event, d){
-		console.log("highlight", d);
+		// console.log("highlight", d);
 		// first every group turns grey
 		d3.selectAll(".foreground")
 		  .transition().duration(200)
@@ -321,7 +396,7 @@ function createParallelCoords(delays, temp){
 	  }
 	// Unhighlight
 	function unhighlight(d){
-		console.log("unhighlight", d.ORIGIN);
+		// console.log("unhighlight", d.ORIGIN);
 		d3.selectAll(".foreground")
 			.transition().duration(200).delay(10000)
 			.style("stroke", (d) => regionColors[stateToRegion[d.ORIGIN_STATE]])
