@@ -87,9 +87,8 @@ function createStreamGraph(delays, temp) {
     // set the dimensions and margins of the graph
 	// var margin = {top: 30, right: 10, bottom: 10, left: 10}
     const margin = { top: 20, right: 20, bottom: 20, left: 20 },
-	// var margin = {top: 30, right: 30, bottom: 10, left: 60},
-	width = 600 - margin.left - margin.right,
-	height = 500 - margin.top - margin.bottom;
+    width = 600 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
 
 	// append the svg object to the body of the page
 	var svg = d3.select("#streamGraph")
@@ -155,9 +154,9 @@ function createParallelCoords(delays, temp){
 	// DONE fix grid layout based on lab4
 
       // set the dimensions and margins of the graph
-    const margin = {top: 30, right: 10, bottom: 10, left: 0},
-    width = 1200 - margin.left - margin.right,
-    height = 400 - margin.top - margin.bottom;
+    const margin = {top: 30, right: 30, bottom: 10, left: 0},
+    width = 1800 - margin.left - margin.right,
+    height = 380 - margin.top - margin.bottom;
 
     // Group the data by ORIGIN_AIRPORT and calculate the sums and means
 	const aggregatedData = d3.rollup(
@@ -368,13 +367,13 @@ function createChordDiagram(delays, temp) {
 
     console.log('Inside createChordDiagram:', delays, temp);
 
-    const svgWidth = 600;
-    const svgHeight = 500;
+    const svgWidth = 500;
+    const svgHeight = 440;
     const margin = { top: 10, right: 10, bottom: 10, left: 0 };
     const width = svgWidth - margin.left - margin.right;
     const height = svgHeight - margin.top - margin.bottom;
 
-    const outerRadius = width * 0.5 - 40;
+    const outerRadius = svgWidth * 0.25 - 40;
     const innerRadius = outerRadius - 30;
 
     const svg = d3
@@ -499,30 +498,30 @@ function createChordDiagram(delays, temp) {
 
 		//add legend and title
 		
-	const size = 20;
-	const xOffset = 185; 
+	// const size = 20;
+	// const xOffset = 185; 
 	
-	svg
-		.selectAll("mydots")
-		.data(Object.values(regionColors))
-		.join("rect")
-		.attr("x", xOffset) 
-		.attr("y", (d, i) => 100 + i * (size + 5))
-		.attr("width", size)
-		.attr("height", size)
-		.style("fill", (d) => d)
-		.style("opacity", 0.7);
+	// svg
+	// 	.selectAll("mydots")
+	// 	.data(Object.values(regionColors))
+	// 	.join("rect")
+	// 	.attr("x", xOffset) 
+	// 	.attr("y", (d, i) => 100 + i * (size + 5))
+	// 	.attr("width", size)
+	// 	.attr("height", size)
+	// 	.style("fill", (d) => d)
+	// 	.style("opacity", 0.7);
 	
-	svg
-		.selectAll("mylabels")
-		.data(Object.keys(regionColors))
-		.join("text")
-		.attr("x", xOffset + size * 1.2) 
-		.attr("y", (d, i) => 100 + i * (size + 5) + size / 2)
-		.text((d) => d)
-		.attr("font-size", "15px")
-		.style("fill", "black")
-		.style("alignment-baseline", "middle")
-		.style("opacity", 0.7);
+	// svg
+	// 	.selectAll("mylabels")
+	// 	.data(Object.keys(regionColors))
+	// 	.join("text")
+	// 	.attr("x", xOffset + size * 1.2) 
+	// 	.attr("y", (d, i) => 100 + i * (size + 5) + size / 2)
+	// 	.text((d) => d)
+	// 	.attr("font-size", "15px")
+	// 	.style("fill", "black")
+	// 	.style("alignment-baseline", "middle")
+	// 	.style("opacity", 0.7);
 	
 }
