@@ -5,12 +5,30 @@
     <!-- Styling for the dashboard -->
     <style>
 		.dashboard {
+			font-style: sans-serif;
 			display: grid;
-			grid-template-columns: 1fr 1fr;
+			grid-template-columns: 1fr ;
 			grid-template-rows: 1fr 1fr;
 			gap: 20px;
 			padding: 20px;
 		}
+		.container {
+                display: flex;
+        }
+		.top-grid {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			grid-template-rows: 1fr;
+			gap: 20px;
+			padding: 20px;
+		}
+        .bottom-grid{
+			display: grid;
+			grid-template-columns: 1fr ;
+			grid-template-rows: 2fr;
+			gap: 20px;
+			padding: 20px;
+        }
 		.visualization {
 			padding: 10px;
 		}
@@ -50,6 +68,13 @@
 			text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
 			cursor: move;
 		}
+		#tooltip {
+			font: 12px sans-serif;
+            opacity: 0;
+            position: absolute;
+            background-color: white;
+            padding: 5px;
+        }
     </style>
     <!-- Load the D3.js library for data visualization -->
     <script src="https://d3js.org/d3.v7.js"></script>
@@ -57,7 +82,7 @@
     <script src="script.js"></script>
     <script src="create.js"></script>
     <script src="update.js"></script> 
-    <!-- <script src="linked.js"></script>  -->
+    <script src="linked.js"></script> 
   </head>
   <!-- Start the dashboard upon page load -->
   <body onload="startDashboard()">
@@ -70,12 +95,21 @@
     </div>
     <!-- The main grid layout of the dashboard -->
     <div class="dashboard">
-      <!-- Visualization area for the bar chart -->
-      <div class="visualization" id="chordDiagram"></div>
-      <!-- Visualization area for the scatter plot -->
-      <div class="visualization" id="streamGraph"></div>
-      <!-- Visualization area for the line chart -->
-      <div class="visualization" id="parallelCoords"></div>
+		<div class="top-grid">
+			<div class="container">
+				<!-- Visualization area for the bar chart -->
+				<div class="visualization" id="chordDiagram"></div>
+				<!-- Visualization area for the scatter plot -->
+				<div class="visualization" id="streamGraph"></div>
+			</div>
+		</div>
+		<div class="bottom-grid">
+			<div class="container">
+				<!-- Visualization area for the line chart -->
+				<div class="visualization" id="parallelCoords"></div>
+			</div>
+		</div>
+		<div id="tooltip"></div>
     </div>
   </body>
 </html>

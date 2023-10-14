@@ -5,8 +5,9 @@ var globalDelays, globalTemp, globalRegions;
 const margin = {top: 30, right: 10, bottom: 10, left: 0};
 
 // Calculate the width and height of the visualizations based on the margins.
-const width = 600 - margin.left - margin.right;
-const height = 400 - margin.top - margin.bottom;
+const width = 600 - margin.left - margin.right,
+    widthParallel = 1200 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
 
 // This function initiates the dashboard and loads the JSON data.
 function startDashboard() {

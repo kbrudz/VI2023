@@ -20,83 +20,121 @@ function updateParallel(data) {
 		console.log(aggregatedData);
 	// Convert the aggregated data back to an array for visualization
 	const formattedData = Array.from(aggregatedData, ([key, value]) => ({ ORIGIN_AIRPORT: key, ...value }));
-	
-    // Create a scale for each attribute (column)
-	const scales = {};
-	const axes = ["DEP_DELAY_SUM", "ARR_DELAY_SUM", "CANCELLED_MEAN", "DIVERTED_MEAN", "AIRPORT_ELEVATION"];
-	axes.forEach(attribute => {
-		scales[attribute] = d3.scaleLinear()
-			.domain([d3.max(d3.extent(formattedData, d => d[attribute])), d3.min(d3.extent(formattedData, d => d[attribute]))])
+
+	const dimensions = ["DEP_DELAY_SUM", "ARR_DELAY_SUM", "CANCELLED_MEAN", "DIVERTED_MEAN", "AIRPORT_ELEVATION"];
+	const y = {};
+	dimensions.forEach(dim => {
+		y[dim] = d3.scaleLinear()
+			.domain([d3.max(d3.extent(formattedData, d => d[dim])), d3.min(d3.extent(formattedData, d => d[dim]))])
 			.range([0, height]);
-		if (attribute == "CANCELLED_MEAN" || attribute == "DIVERTED_MEAN")
-		scales[attribute] = d3.scaleLinear()
+		if (dim == "CANCELLED_MEAN" || dim == "DIVERTED_MEAN")
+		y[dim] = d3.scaleLinear()
 			.domain([1,0])
 			.range([0, height]);
 	});
-    // Build the X scale -> it find the best position for each Y axis
-	x = d3.scalePoint()
-        .range([0, width])
-        .padding(1)
-        .domain(axes);
+
+	var x = d3.scalePoint()
+		.rangeRound([0, widthParallel])
+		.padding(1)
+		.domain(dimensions);
+	var g = svg.selectAll(".dimension")
+		.attr("transform", function(d) { return "translate(" + x(d) + ")"; })
+		
 
     function path(d) {
-        return d3.line()(axes.map(function(p) { return [x(p), scales[p](d[p])]; }));
+		return line(dimensions.map(function(p) { return [x(p), y[p](d[p])]; }));
     }
-    function emptyPath(d) {
-        return d3.line()(axes.map(function(p) { return [0, 0]; }));
-    }
+    // function emptyPath(d) {
+    //     return d3.line()(axes.map(function(p) { return [0, 0]; }));
+    // }
+	var line = d3.line();
+
     // Select all existing bars and bind the data to them
-    const lines = svg.selectAll(".line").data(formattedData, (d) => d.ORIGIN_AIRPORT);
-  
+    const background = svg.selectAll(".background").selectAll("path").data(formattedData);
+    const foreground = svg.selectAll(".foreground").selectAll("path").data(formattedData);
 
     // Update existing bars with transitions for position, width, height, and color
-    lines
-      .transition()
-      .duration(1000)
-      .attr("d", path);
+    background
+		.transition()
+		.duration(1000)
+		.attr("d", path);
+	foreground
+		.transition()
+		.duration(1000)
+		.attr("d", path)
+		.style("stroke", (d) => regionColors[stateToRegion[d.ORIGIN_STATE]])
+		.style("stroke-width", 1)
+		.style("fill", "none");
+	
   
     // Add new bars for any new data points and transition them to their correct position and width
-    lines
+    background
         .enter()
         .append("path")
-        .attr("class", function (d) { return "line " + d.ORIGIN } ) //
-        .attr("d", path)
-        .style("stroke", (d) => regionColors[stateToRegion[d.ORIGIN_STATE]])
-        .style("stroke-width", 1)
-        .style("fill", "none")
+		.attr("class", (d) => d.ORIGIN)
+		.attr("d", path)
+        .transition()
+        .duration(4000);
+	foreground
+        .enter()
+        .append("path")
+		.attr("class", (d) => d.ORIGIN)
+		.attr("d", path)
+		.style("stroke", (d) => regionColors[stateToRegion[d.ORIGIN_STATE]])
+		.style("stroke-width", 1)
+		.style("fill", "none")
         .transition()
         .duration(4000);
   
     // Remove any bars that are no longer in the updated data
-    lines.exit().transition().duration(100).attr("width", 0).remove();
-  
-    // Update the y-axis with the new data points
-    	// Add axes
-    svg.selectAll(".axis")
-        .data(axes).enter()
-        .append("g")
-        .attr("class", "axis")
-        .attr("transform", (d, i) => "translate(" + x(d) + ")")
-        .each(function(d) {
-            d3.select(this).call(d3.axisLeft().scale(scales[d]));
-        });
+    background.exit().transition().duration(100).attr("width", 0).remove();
+    foreground.exit().transition().duration(100).attr("width", 0).remove();
+	
+	// svg.selectAll(".brush").remove()
+	d3.selectAll(".brush")
+		.each(function(d) {
+			if(y[d].name == 'scale'){
+			d3.select(this)
+				.call(y[d].brush = d3.brushY()
+					.extent([[-8, 0], [8,height]])
+					.on("start", (event, d) => brushstart(event, d))
+					.on("brush", (event, d) => brushing(event, d)))
+					.on("end", (event, d) => brushend(event, d));
+			}
+		})
+	// Add an axis and title.
+	svg.selectAll(".axis")
+		.each(function(d) {  d3.select(this).call(d3.axisLeft(y[d]));})
+		//text does not show up because previous line breaks somehow
+		.append("text")
+		.attr("fill", "black")
+		.style("text-anchor", "middle")
+		.attr("y", -9) 
+		.text(function(d) { return d; });
 
-// Add labels for ORIGIN_AIRPORT
-    svg
-        .selectAll(".axis")
-        .filter(d => d === "ORIGIN_AIRPORT")
-        .selectAll("text")
-        .attr("transform", "rotate(-45)")
-        .style("text-anchor", "end");
-  
-    // Add tooltips to all bars with the movie title as the content
-    svg
-      .selectAll(".line")
-    //   .on("mouseover", handleMouseOver)
-    //   .on("mouseout", handleMouseOut)
-      .append("title")
-      .text((d) => d.ORIGIN_AIRPORT);
-  }
+	// Handles a brush event, toggling the display of foreground lines.
+	function brushstart(event) {
+		event.sourceEvent.stopPropagation();  
+	}
+	function brushing(event) {
+		for(var i=0;i<dimensions.length;++i){
+			if(event.target==y[dimensions[i]].brush) {
+				  extents[i]=event.selection.map(y[dimensions[i]].invert,y[dimensions[i]]);
+				  }
+		}
+		foreground.style("display", function(d) {
+			return dimensions.every(function(p, i) {
+				if(extents[i][0]==0 && extents[i][0]==0) {
+					return true;
+				}
+			return extents[i][1] <= d[p] && d[p] <= extents[i][0];
+			}) ? null : "none";
+		}); 
+	}
+	function brushend(event) {
+		if (event.defaultPrevented) return; // click suppressed
+	}
+}
   
 //   // Function to update the scatter plot with new data
 //   function updateScatterPlot(data) {
