@@ -32,17 +32,23 @@ function createStreamGraph(delays, temp) {
     // console.log('here1');
 
 	// All of these are different ways of formatting the data in an attempt to make it fit for the area chart
-	const delaysFiltered = delays.filter(
-		d => (d.DEP_DELAY !== '' && d.FL_DATE !== '' && d.ORIGIN_STATE !== '')
+	const delaysFiltered1 = delays.filter(
+		d => (d.DEP_DELAY !== null && d.FL_DATE !== null && d.ORIGIN_STATE !== null )
 	);
+	console.log("f1",delaysFiltered1);
+	const delaysFiltered = delaysFiltered1.filter(
+		d => (!(stateToRegion[d.ORIGIN_STATE] == null))
+	);
+	console.log("f2",delaysFiltered);
 
 	const delaysPerDate = d3.rollups(delaysFiltered, 
 		v => d3.sum(v, d => Math.max(d.DEP_DELAY, 0)), 
-		d => d3.timeParse("%Y-%m-%d")(d.FL_DATE),  
+		d => d.FL_DATE,  
 		d => stateToRegion[d.ORIGIN_STATE]
 	).flatMap(
 		([k1, v1]) => [...v1].map(([k2, v2]) => ({date: k1, region: k2, delay: v2}))
 	);
+
 	const temperature = d3.rollups(
 		temp,
 		group => ({
@@ -53,46 +59,6 @@ function createStreamGraph(delays, temp) {
 	).flatMap(
 		([k1, v1]) => ({date: k1, avgTempC: v1.avgTempC, avgTempF: v1.avgTempF}));
 	// console.log("temp: ",temperature);
-
-	//console.log("total delays: ", delaysPerDate);
-
-	
-	// // list of unique airport names
-	// const unique_airports = d3.union(data.map(d => d.airport)) 
-
-	// const aux = new Map();
-	// var i = 0;
-	// data.forEach(d => {
-    //     aux.set(i,  {
-	// 		date: d.date,
-	// 		[d.airport]: Math.abs(d.delay)
-	// 	});
-	// 	i++;
-    // });
-    // const new_data = Array.from(aux, ([key, value]) => value);
-  
-    // // Create an object to store the data for each airport
-    // const airportData = {};
-    // unique_airports.forEach(airport => {
-    //     airportData[airport] = [];
-    // });
-    // // Group data by date and airport and sum the delays
-    // data.forEach(d => {
-	// 	airportData[d.airport].push({
-	// 		[d.date]: d.date,
-	// 		delay: Math.abs(d.delay)
-	// 	});
-    // });
-
-	// const aggregatedData = d3.rollups(
-	// 	delays,
-	// 	group => ({
-	// 		delay: (d3.mean(group, d => +d.DEP_DELAY) + d3.mean(group, d => d.ARR_DELAY))/2,
-	// 		date: group[0].DEP_DELAY
-	// 	}),
-	// 	d => d.ORIGIN_AIRPORT
-	// );
-	
 
     // set the dimensions and margins of the graph
 	// var margin = {top: 30, right: 10, bottom: 10, left: 10}
@@ -110,41 +76,45 @@ function createStreamGraph(delays, temp) {
 		"translate(" + margin.left + "," + margin.top + ")")
 	.attr('viewBox', '0 0 600 400');
 
-	// Add X axis
-	var xScale = d3.scaleLinear()
-		.domain(d3.extent(delaysPerDate, d => d.date))
-		.range([ 0, width ]);
+	const xScale = d3.scaleTime()
+		.domain([new Date("2018-12-01"), new Date("2018-12-31")])
+		.range([0, width]);
 
-	// Add Y axis
-	var yScale = d3.scaleLinear()
-		.domain([0, 100000])
-		.range([ height, 0 ]);
-		svg.append("g")
+	const yScale = d3.scaleLinear()
+		.domain([0, d3.max(delaysPerDate, d => d.delay)])
+		.nice()
+		.range([height, 0]);
+	const lineGenerators = {};
+
+console.log("filter",delaysPerDate);
+	delaysPerDate.forEach(d => {
+		if (isNaN(d.delay) || isNaN(d.region) || isNaN(d.date)){
+			// console.log("nan values",d);
+			// d.delay = 0;
+			// d.region = "nowhere";
+			// d.date = new Date("1-1-1");
+			// console.log("nan values",d);
+		}
+		if (!lineGenerators[d.region]) {
+			lineGenerators[d.region] = d3.line()
+				.x(d => xScale(new Date(d.date)))
+				.y(d => yScale(d.delay));
+		}
+	});
+	
+	svg.append("g")
+		.attr("class", "x-axis")
+		.attr("transform", `translate(0, ${height})`)
+		.call(d3.axisBottom(xScale).ticks(d3.timeDay.every(2)).tickFormat(d3.timeFormat("%b %d")));
+
+	svg.append("g")
+		.attr("class", "y-axis")
 		.call(d3.axisLeft(yScale));
 
-	//stack the data?
-	var stackedData = d3.stack()
-		.offset(d3.stackOffsetSilhouette)
-		.keys(["west","south","midwest","northeast"])(delaysPerDate)
-
-	/*
-	// Show the areas
-	svg
-	.selectAll("mylayers")
-	.data(stackedData)
-	.enter()
-	.append("path")
-	.style("fill", d => regionColors[d.region])
-	.attr("d", d3.area()
-		.x(function(d, i) { return xScale(d.date); })
-		.y0(yScale(0))
-		.y1( d=> yScale(d[1]) )
-	)
-	*/
-	
+	console.log("temp", temp);
 	var temperatureValues = d3.map(temperature, d => d.avgTempC);
 	var color = d3.scaleLinear()
-		.range(["red", "#ffefef", "blue"])
+		.range(["#8B0000", "#ffefef", "#00008B"])
 		.domain([d3.min(temperatureValues),(d3.min(temperatureValues)+d3.min(temperatureValues)/2), d3.max(temperatureValues)]);
 	var days = d3.map(temperature, d => new Date(d.date).getDate());
 	var dates = d3.map(temperature, d => d.date);
@@ -154,70 +124,38 @@ function createStreamGraph(delays, temp) {
 		.range([ 0, width ])
 		.domain(dates)
 		.padding(0.01);
-		var xDays = d3.scaleBand()
+	var xDays = d3.scaleBand()
 		.range([ 0, width ])
 		.domain(days)
 		.padding(0.01);
 	svg.append("g")
+		.attr("class", "axisXDays")
 		.attr("transform", "translate(0," + height + ")")
-		.call(d3.axisBottom(xDays));
+		// .call(d3.axisBottom(xDays));
 	// console.log("x", [d3.min(temperature, d => d.avgTempC),d3.max(temperature, d => d.avgTempC)]);
 
 	svg.selectAll()
       .data(temperature, function(d) {return d.date+':'+d.avgTempC;})
       .enter()
       .append("rect")
+	  .attr("class", "rect")
       .attr("fill", (d) => color(d.avgTempC))
+	  .attr("opacity", 0.8)
       .attr("x", function(d) {return x(d.date) })
     //   .attr("y", function(d) { return y(d.avgTempC) })
       .attr("width", x.bandwidth() )
       .attr("height", height );
 
-	// Add the area
-	svg.append("path")
-		.datum(delaysPerDate)
-		.attr("fill", "steelblue")
-		.attr("d", d3.area()
-		  .x(function(d) { return xScale(d.date) })
-		  .y0(yScale(0))
-		  .y1(function(d) { return yScale(d.delay) })
-		)
-	
-	// svg.append("g")
-	// 	.attr("transform", "translate(0," + height + ")")
-	// 	.call(d3.axisBottom(xScale).ticks(5));
-
-	// svg.append("g")
-	// 	.attr("class", "legendQuant")
-	// 	.attr("transform", "translate("+ width +",0)");
-
-	// const g = svg.append('g')
-	// 	.attr('transform', `translate(${margin.left},${margin.top})`);
-
-	// const squareSize = 14;
-	// const legend = g.append('g')
-	// 	.attr('font-family', 'sans-serif');
-	// // create one g for each entry in the color scale
-	// const cell = legend.selectAll('g')
-	//   .data(color.domain())
-	//   .join('g');
-	// add the text label for each entry
-	// cell.append('text')
-	// 	.attr('dominant-baseline', 'middle')
-	// 	.attr('x', squareSize * 1.5)
-	// 	.attr('y', squareSize / 2)
-	// 	.text(d => d);
-
-	// position the cells
-	// let xPosition = 0;
-
-	// cell.each(function(d, i) {
-    //     d3.select(this)
-    //         .attr('transform', `translate(${xPosition})`);
-	// 	xPosition += (this.getBBox().width + squareSize);
-	// });
-	// svg.select(".legendQuant")
-	// 	.call(legend);
+	console.log("filter",delaysPerDate);
+	const lines = svg.selectAll(".line")
+		.data(Object.keys(lineGenerators))
+		.enter()
+		.append("path")
+		.attr("class", "line")
+		.attr("d", d => lineGenerators[d](delaysPerDate.filter(item => item.region === d)))
+		.style("stroke", d => regionColors[d])
+		.style("stroke-width", 3)
+		.style("fill", "none");
 }
 
 function createParallelCoords(delays, temp){

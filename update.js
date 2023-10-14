@@ -136,76 +136,87 @@ function updateParallel(data) {
 	}
 }
   
-//   // Function to update the scatter plot with new data
-//   function updateScatterPlot(data) {
-//     // Select the SVG element of the scatter plot
-//     const svg = d3.select("#scatterPlot").select("svg").select("g");
+  // Function to update the scatter plot with new data
+  function updateStream(delays, temp) {
+	const margin = { top: 20, right: 20, bottom: 20, left: 20 },
+    width = 600 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
+
+    // Select the SVG element of the scatter plot
+    const svg = d3.select("#streamGraph").select("svg").select("g");
   
-//     // Create x, y, and r (radius) scales for the plot
-//     const xScale = d3
-//       .scaleLinear()
-//       .domain([0, d3.max(data, (d) => d.budget)])
-//       .range([0, width]);
-//     const yScale = d3.scaleLinear().domain([0, 10]).range([height, 0]);
-//     const rScale = d3
-//       .scaleLinear()
-//       .domain([
-//         d3.min(globalData, (d) => d.oscar_year),
-//         d3.max(globalData, (d) => d.oscar_year),
-//       ])
-//       .range([5, 15]);
+	const temperature = d3.rollups(
+		temp,
+		group => ({
+			avgTempC: d3.mean(group, d => d.AvgTemperatureC),
+			avgTempF: d3.mean(group, d => d.AvgTemperatureF),
+		}),
+		d => d.Date
+	).flatMap(
+		([k1, v1]) => ({date: k1, avgTempC: v1.avgTempC, avgTempF: v1.avgTempF}));
+	
+    // Create scales for the plot
+    var temperatureValues = d3.map(temperature, d => d.avgTempC);
+	var color = d3.scaleLinear()
+		.range(["red", "#ffefef", "blue"])
+		.domain([d3.min(temperatureValues),(d3.min(temperatureValues)+d3.min(temperatureValues)/2), d3.max(temperatureValues)]);
+	var days = d3.map(temperature, d => new Date(d.date).getDate());
+	var dates = d3.map(temperature, d => d.date);
+
+	// Build X scales and axis:
+	var x = d3.scaleBand()
+		.range([ 0, width ])
+		.domain(dates)
+		.padding(0.01);
+	var xDays = d3.scaleBand()
+		.range([ 0, width ])
+		.domain(days)
+		.padding(0.01);
+	
   
-//     // Select all existing circles and bind the data to them
-//     const circles = svg.selectAll(".circle").data(data, (d) => d.title);
+    // Select all existing circles and bind the data to them
+    const rects = svg.selectAll(".rect")
+		.data(temperature, function(d) {return d.date+':'+d.avgTempC;});
   
-//     // Update existing circles with transitions for position and radius
-//     circles
-//       .transition()
-//       .duration(1000)
-//       .attr("cx", (d) => xScale(d.budget))
-//       .attr("cy", (d) => yScale(d.rating))
-//       .attr("r", (d) => rScale(d.oscar_year));
+    // Update existing circles with transitions for position and radius
+    rects
+      .transition()
+      .duration(1000)
+      .attr("fill", (d) => color(d.avgTempC))
+      .attr("x", function(d) {return x(d.date) });
   
-//     // Add new circles for any new data points and transition them to their correct position and radius
-//     circles
-//       .enter()
-//       .append("circle")
-//       .attr("class", "circle data")
-//       .attr("cx", (d) => xScale(d.budget))
-//       .attr("cy", (d) => yScale(d.rating))
-//       .attr("r", 0)
-//       .attr("fill", "steelblue")
-//       .attr("stroke", "black")
-//       .transition()
-//       .duration(500)
-//       .attr("r", (d) => rScale(d.oscar_year));
+    // Add new circles for any new data points and transition them to their correct position and radius
+    rects
+      .enter()
+      .append("rect")
+      .attr("class", "rect" )
+      .attr("fill", (d) => color(d.avgTempC))
+      .attr("x", function(d) {return x(d.date) })
+    //   .attr("y", function(d) { return y(d.avgTempC) })
+      .attr("width", x.bandwidth() )
+      .attr("height", height )
+      .transition()
+      .duration(500);
   
-//     // Remove any circles that are no longer in the updated data
-//     circles.exit().transition().duration(500).attr("r", 0).remove();
+    // Remove any circles that are no longer in the updated data
+    rects.exit().transition().duration(500).attr("y", 0).remove();
   
-//     // Update the y-axis with the new data points
-//     svg.select(".y-axis").transition().duration(500).call(d3.axisLeft(yScale));
   
-//     // Update the x-axis with the new data points, formatting the labels for budget in millions
-//     svg
-//       .select(".x-axis")
-//       .transition()
-//       .duration(500)
-//       .call(
-//         d3
-//           .axisBottom(xScale)
-//           .tickFormat((d) => d3.format(".1f")(d / 1000000) + "M")
-//           .tickSizeOuter(0)
-//       );
+    // Update the x-axis with the new data points, formatting the labels for budget in millions
+    svg
+      .select(".axisXDays")
+      .transition()
+      .duration(500)
+      .call(d3.axisBottom(xDays));
   
-//     // Add tooltips to all circles with the movie title as the content
-//     svg
-//       .selectAll(".circle")
-//       .on("mouseover", handleMouseOver)
-//       .on("mouseout", handleMouseOut)
-//       .append("title")
-//       .text((d) => d.title);
-//   }
+    // Add tooltips to all circles with the movie title as the content
+    // svg
+    //   .selectAll(".circle")
+    //   .on("mouseover", handleMouseOver)
+    //   .on("mouseout", handleMouseOut)
+    //   .append("title")
+    //   .text((d) => d.title);
+  }
   
 //   // Function to update the line chart with new data
 //   function updateLineChart(data) {

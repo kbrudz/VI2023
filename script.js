@@ -24,7 +24,7 @@ function startDashboard() {
         // Create different visualizations using the loaded data.
         createParallelCoords(files[0], files[1]);
         createStreamGraph(files[0], files[1]);
-        createChordDiagram(files[0], files[1]);
+        // createChordDiagram(files[0], files[1]);
         // createLineChart(data1, data2);
         // createHistogram(data1, data2);
     }).catch(function(err) {
@@ -41,23 +41,28 @@ function updateIdioms(data) {
   switch (data) {
     case "west":
         // If "old" is selected, update the visualizations with data before or equal to 2010.
-        updateParallel(globalDelays.filter((item) => stateToRegion[item.ORIGIN_STATE] === "west"));
+        updateParallel(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === "west"));
+        updateStream(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === "west"),globalTemp.filter((d) => stateToRegion[d.iso_region] === "west"));
         break;
     case "south":
 //       // If "new" is selected, update the visualizations with data after 2010.
-        updateParallel(globalDelays.filter((item) => stateToRegion[item.ORIGIN_STATE] === "south"));
+        updateParallel(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === "south"));
+        updateStream(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === "south"),globalTemp.filter((d) => stateToRegion[d.iso_region] === "south"));
         break;
     case "midwest":
         // If "old" is selected, update the visualizations with data before or equal to 2010.
-        updateParallel(globalDelays.filter((item) => stateToRegion[item.ORIGIN_STATE] === "midwest"));
+        updateParallel(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === "midwest"));
+        updateStream(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === "midwest"),globalTemp.filter((d) => stateToRegion[d.iso_region] === "midwest"));
         break;
     case "northeast":
 //       // If "new" is selected, update the visualizations with data after 2010.
-        updateParallel(globalDelays.filter((item) => stateToRegion[item.ORIGIN_STATE] === "northeast"));
+        updateParallel(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === "northeast"));
+        updateStream(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === "northeast"),globalTemp.filter((d) => stateToRegion[d.iso_region] === "northeast"));
         break;
     default:
 //       // If no specific data type is selected, update the visualizations with all the data.
         updateParallel(globalDelays);
+        updateStream(globalDelays, globalTemp);
         break;
   }
 }
