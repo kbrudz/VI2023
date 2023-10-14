@@ -97,9 +97,8 @@ function createStreamGraph(delays, temp) {
     // set the dimensions and margins of the graph
 	// var margin = {top: 30, right: 10, bottom: 10, left: 10}
     const margin = { top: 20, right: 20, bottom: 20, left: 20 },
-	// var margin = {top: 30, right: 30, bottom: 10, left: 60},
-	width = 600 - margin.left - margin.right,
-	height = 500 - margin.top - margin.bottom;
+    width = 600 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
 
 	// append the svg object to the body of the page
 	var svg = d3.select("#streamGraph")
@@ -230,9 +229,9 @@ function createParallelCoords(delays, temp){
 	// DONE fix grid layout based on lab4
 
       // set the dimensions and margins of the graph
-    const margin = {top: 30, right: 10, bottom: 10, left: 0},
-    width = 1200 - margin.left - margin.right,
-    height = 400 - margin.top - margin.bottom;
+    const margin = {top: 30, right: 30, bottom: 10, left: 0},
+    width = 1800 - margin.left - margin.right,
+    height = 380 - margin.top - margin.bottom;
 
     // Group the data by ORIGIN_AIRPORT and calculate the sums and means
 	const aggregatedData = d3.rollup(
@@ -439,165 +438,86 @@ function createParallelCoords(delays, temp){
 	}
 }
 function createChordDiagram(delays, temp) {
-
-
     console.log('Inside createChordDiagram:', delays, temp);
 
-    const svgWidth = 600;
-    const svgHeight = 500;
-    const margin = { top: 10, right: 10, bottom: 10, left: 0 };
+    const svgWidth = 650;
+    const svgHeight = 550;
+    const margin = { top: 0, right: 10, bottom: 10, left: 0 };
     const width = svgWidth - margin.left - margin.right;
     const height = svgHeight - margin.top - margin.bottom;
 
-    const outerRadius = width * 0.5 - 40;
+    const outerRadius = svgWidth * 0.4 - 40;
     const innerRadius = outerRadius - 30;
-
+	
     const svg = d3
         .select("#chordDiagram")
         .append("svg")
         .attr("width", svgWidth)
         .attr("height", svgHeight)
         .append("g")
-        .attr("transform", `translate(${width / 2},${(height+width) / 4})`);
+        .attr("transform", `translate(${width / 2},${(height + width) / 5.5})`);
 
-    const total_delays = d3.rollup(
-        delays,
-        (v) => d3.sum(v, (d) => +d.DEP_DELAY),
-        (d) => d.ORIGIN_STATE,
-        (d) => d.DEST_STATE
+
+    const regions = ["west", "south", "midwest", "northeast"]; // regions
+
+    // Create a matrix of the delays between regions
+    const delaysMatrix = regions.map((sourceRegion) =>
+        regions.map((targetRegion) => {
+            const sum = d3.sum(delays.filter(d => stateToRegion[d.ORIGIN_STATE] === sourceRegion && stateToRegion[d.DEST_STATE] === targetRegion), d => d.DEP_DELAY);
+            return sourceRegion === targetRegion ? 0 : sum; 
+        })
     );
 
-    const delayed = Array.from(total_delays, ([originState, destState, delay]) => {
-        if (originState && destState) {
-            return {
-                originState,
-                destState,
-                delay,
-            };
-        }
-        return null;
-    }).filter((data) => data !== null);
-
-    const uniqueRegions = Array.from(new Set([...total_delays.keys()]));
-
-    const matrix = uniqueRegions.map((originState) =>
-        uniqueRegions.map((destState) => total_delays.get(originState)?.get(destState) || 0)
-    );
-
-    delayed.forEach((d) => {
-        const i = uniqueRegions.indexOf(d.originState);
-        const j = uniqueRegions.indexOf(d.destState);
-        if (i !== -1 && j !== -1) {
-            matrix[i][j] += d.delay;
-        } else {
-            console.log(`Invalid indices for originState: ${d.originState} and destState: ${d.destState}`);
-        }
-    });
-
-    const chord = d3
-        .chord()
+    const chord = d3.chord()
         .padAngle(0.05)
-        .sortSubgroups(d3.descending)
-        .sortChords(d3.descending)
-        (matrix);
+        .sortSubgroups(d3.descending);
 
     const arc = d3.arc()
-        .innerRadius(200)
-        .outerRadius(210);
+        .innerRadius(innerRadius)
+        .outerRadius(outerRadius);
 
     const ribbon = d3.ribbon()
-        .radius(200)
-        .padAngle(0.05)
-        .startAngle((d) => d.startAngle)
-        .endAngle((d) => d.endAngle)
-        .source((d) => d.source)
-        .target((d) => d.target)
-        .radius(200);
-
-    const gradient = svg.append("defs")
-        .append("linearGradient")
-        .attr("id", "gradient")
-        .selectAll("stop")
-        .data(chord)
-        .join("stop")
-        .attr("offset", (d) => Math.round(d.source.startAngle * 100) / 100)
-        .attr("stop-color", (d) => d3.interpolateSpectral(d.source.index / 10));
-
-    svg
-        .datum(chord)
-        .append("g")
-        .selectAll("path")
-        .data((d) => d)
-        .join("path")
-        .attr("d", ribbon)
-        .attr("fill", "url(#gradient)")
-        .attr("stroke", "black")
-        .style("stroke-width", "0.5px")
-        .style("opacity", 0.7);
-
-    svg
-        .datum(chord)
-        .append("g")
-        .selectAll("g")
-        .data((d) => d.groups)
-        .join("g")
-        .append("path")
-        .attr("fill", (d) => {
-            const state = uniqueRegions[d.index];
-            const region = stateToRegion[state];
-            return regionColors[region];
+        .radius(innerRadius);
+	const chords = chord(delaysMatrix); // Zdefiniuj chords przed użyciem
+	const grads = svg.append("defs").selectAll("linearGradient")
+		.data(chords) // Popraw to
+		.enter().append("linearGradient")
+		.attr("id", function (d) {
+			return `chordGradient-${d.source.index}-${d.target.index}`;
+		})
+        .attr("gradientUnits", "userSpaceOnUse")
+        .attr("x1", function (d) {
+            return innerRadius * Math.cos((d.source.endAngle - d.source.startAngle) / 2 + d.source.startAngle - Math.PI / 2);
         })
-        .attr("stroke", "black")
-        .attr("d", arc)
-        .style("stroke-width", "0.5px")
-        .style("opacity", 0.7);
-
-    // Dodaj etykiety
-    svg
-        .datum(chord)
-        .append("g")
-        .selectAll("g")
-        .data((d) => d.groups)
-        .join("g")
-        .append("text")
-        .attr("x", 6)
-        .attr("dy", 15)
-        .append("textPath")
-        .attr("href", "#gradient")
-        .text((d) => {
-            const state = uniqueRegions[d.index];
-            return state;
+        .attr("y1", function (d) {
+            return innerRadius * Math.sin((d.source.endAngle - d.source.startAngle) / 2 + d.source.startAngle - Math.PI / 2);
         })
-        .attr("font-size", "12px")
-        .attr("fill", "black")
-        .style("opacity", 0.7);
+        .attr("x2", function (d) {
+            return innerRadius * Math.cos((d.target.endAngle - d.target.startAngle) / 2 + d.target.startAngle - Math.PI / 2);
+        })
+        .attr("y2", function (d) {
+            return innerRadius * Math.sin((d.target.endAngle - d.target.startAngle) / 2 + d.target.startAngle - Math.PI / 2);
+        });
 
-		//add legend and title
-		
-	const size = 20;
-	const xOffset = 185; 
-	
-	svg
-		.selectAll("mydots")
-		.data(Object.values(regionColors))
-		.join("rect")
-		.attr("x", xOffset) 
-		.attr("y", (d, i) => 100 + i * (size + 5))
-		.attr("width", size)
-		.attr("height", size)
-		.style("fill", (d) => d)
-		.style("opacity", 0.7);
-	
-	svg
-		.selectAll("mylabels")
-		.data(Object.keys(regionColors))
-		.join("text")
-		.attr("x", xOffset + size * 1.2) 
-		.attr("y", (d, i) => 100 + i * (size + 5) + size / 2)
-		.text((d) => d)
-		.attr("font-size", "15px")
-		.style("fill", "black")
-		.style("alignment-baseline", "middle")
-		.style("opacity", 0.7);
-	
+		grads.append("stop")
+        .attr("offset", "0%")
+        .attr("stop-color", function (d) {
+            return regionColors[regions[d.source.index]];
+        });
+
+    grads.append("stop")
+        .attr("offset", "100%")
+        .attr("stop-color", function (d) {
+            return regionColors[regions[d.target.index]];
+        });
+
+    svg.selectAll("path.chord")
+        .data(chord(delaysMatrix))
+        .enter().append("path")
+        .attr("class", "chord")
+        .style("fill", function (d) {
+            return `url(#chordGradient-${d.source.index}-${d.target.index})`;
+        })
+        .style("opacity", 0.8)
+        .attr("d", ribbon);
 }

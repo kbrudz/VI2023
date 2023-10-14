@@ -1,44 +1,22 @@
 <!DOCTYPE html>
+<html lang="en"></html>
 <html>
   <head>
-    <title>Dashboard</title>
+    <meta charset="utf-8">
+
+    <meta name="description" content="From Delay to Departure: A Visual Journey through Air Travel Disruptions">
+    <meta name="author" content="Faculty">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>From Delay to Departure: A Visual Journey through Air Travel Disruptions</title>
+		<!-- CSS -->
+		<script language="JavaScript" src="libs/clusterize.min.js"></script>
+		<!-- CSS -->
+		<link href="style/clusterize.css" rel="stylesheet">
+		<link rel="stylesheet" href="style/styles.css">
+	</head>
     <!-- Styling for the dashboard -->
     <style>
-		.dashboard {
-			font-style: sans-serif;
-			display: grid;
-			grid-template-columns: 1fr ;
-			grid-template-rows: 1fr 1fr;
-			gap: 20px;
-			padding: 20px;
-		}
-		.container {
-                display: flex;
-        }
-		.top-grid {
-			display: grid;
-			grid-template-columns: 1fr 1fr;
-			grid-template-rows: 1fr;
-			gap: 20px;
-			padding: 20px;
-		}
-        .bottom-grid{
-			display: grid;
-			grid-template-columns: 1fr ;
-			grid-template-rows: 2fr;
-			gap: 20px;
-			padding: 20px;
-        }
-		.visualization {
-			padding: 10px;
-		}
-		.dashboard > :nth-child(1),
-		.dashboard > :nth-child(2),
-		.dashboard > :nth-child(3) {
-			display: flex;
-			justify-content: center;
-			align-items: center;
-		}
 		.button-container {
 			text-align: center;
 			margin-bottom: 5px;
@@ -53,21 +31,7 @@
 			stroke: #ddd;
 			shape-rendering: crispEdges;
 		}
-		.brush .extent {
-			fill-opacity: .3;
-			stroke: #fff;
-			shape-rendering: crispEdges;
-		}	
-		.axis line,
-		.axis path {
-			fill: none;
-			stroke: #000;
-			shape-rendering: crispEdges;
-		}
-		.axis text {
-			text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
-			cursor: move;
-		}
+		
 		#tooltip {
 			font: 12px sans-serif;
             opacity: 0;
@@ -76,6 +40,16 @@
             padding: 5px;
         }
     </style>
+	<body>
+		<!-- svg adapted from https://bl.ocks.org/jfsiii/7772281 -->
+		<svg height="300" width="1000" style="position: absolute; margin-left: -20000000pt;" version="1.1">
+			<pattern id="pattern-stripe" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+				<rect width="2" height="4" transform="translate(0,0)" fill="white"></rect>
+			</pattern>
+			<mask id="mask-stripe">
+				<rect x="0" y="0" width="100%" height="100%" fill="url(#pattern-stripe)" />
+			</mask>
+	</svg>
     <!-- Load the D3.js library for data visualization -->
     <script src="https://d3js.org/d3.v7.js"></script>
     <!-- Load JavaScript files for the dashboard -->
@@ -86,30 +60,42 @@
   </head>
   <!-- Start the dashboard upon page load -->
   <body onload="startDashboard()">
+	<div class="Top-Bar-Informational card">
+		<div class="Logo">
+			<img src="img/logo-ist.png" id="ist-logo">
+		</div>
+		<div class="Dashboard-Name">
+			<p id="top-bar-title-dashboard-name">From Delay to Departure: A Visual Journey through Air Travel Disruptions</p>
+		</div>
+		<div class="Group-Name">
+			<p id="top-bar-title-group-name">VI 2023 G09</p>
+		</div>
+	</div>
     <!-- Buttons to update the data visualization -->
     <div class="button-container">
-      <button onclick="updateIdioms('midwest')">mid Data</button>
-      <button onclick="updateIdioms('south')">south Data</button>
-      <button onclick="updateIdioms('west')">West Data</button>
-      <button onclick="updateIdioms('all')">All Data</button>
-    </div>
+		<button onclick="updateIdioms('midwest')">mid Data</button>
+		<button onclick="updateIdioms('south')">south Data</button>
+		<button onclick="updateIdioms('west')">West Data</button>
+		<button onclick="updateIdioms('all')">All Data</button>
+	  </div>
     <!-- The main grid layout of the dashboard -->
+	<!-- Create the dashboard put chord diagram left size, stream graph right size, parallel coordinates bottom -->
     <div class="dashboard">
-		<div class="top-grid">
-			<div class="container">
-				<!-- Visualization area for the bar chart -->
-				<div class="visualization" id="chordDiagram"></div>
-				<!-- Visualization area for the scatter plot -->
-				<div class="visualization" id="streamGraph"></div>
-			</div>
-		</div>
-		<div class="bottom-grid">
-			<div class="container">
-				<!-- Visualization area for the line chart -->
-				<div class="visualization" id="parallelCoords"></div>
-			</div>
-		</div>
-		<div id="tooltip"></div>
+        <div class="top-grid">
+            <div class="container">
+                <!-- Visualization area for the chord diagram -->
+                <div class="visualization" id="chordDiagram" style="width: 50%; float: left; height: 450px"></div>
+                <!-- Visualization area for the stream graph -->
+                <div class="visualization" id="streamGraph" style="width: 50%; float: left;height: 450px;"></div>
+            </div>
+        </div>
+        <div class="bottom-grid">
+            <div class="container">
+                <!-- Visualization area for the parallel coordinates -->
+                <div class="visualization" id="parallelCoords" style="height: 480px;"></div>
+            </div>
+        </div>
+        <div id="tooltip"></div>
     </div>
-  </body>
+</body>
 </html>
