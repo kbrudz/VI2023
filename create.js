@@ -376,6 +376,11 @@ function createParallelCoords(delays, temp){
 	}
 }
 function createChordDiagram(delays, temp) {
+
+	//#TO DO Add airport names!!
+	// #TO DO Add boton to show only one region
+	// #TO DO Show % of delays when you choose a region
+	
     console.log('Inside createChordDiagram:', delays, temp);
 
     const svgWidth = 650;
@@ -457,5 +462,9 @@ function createChordDiagram(delays, temp) {
             return `url(#chordGradient-${d.source.index}-${d.target.index})`;
         })
         .style("opacity", 0.8)
+		.on("mouseover", (event, d)=>{ showTooltip(event, d)})
+		// .on("mouseover.second", (event, d)=>{ highlight(event, d)})
+		.on("mouseout", hideTooltip) // Functi
+		// .on("mouseout.second", unhighlight)
         .attr("d", ribbon);
 }
