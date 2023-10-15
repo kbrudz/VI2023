@@ -24,7 +24,7 @@ function startDashboard() {
         // Create different visualizations using the loaded data.
         createParallelCoords(files[0], files[1]);
         createStreamGraph(files[0], files[1]);
-        // createChordDiagram(files[0], files[1]);
+        createChordDiagram(files[0], files[1]);
         // createLineChart(data1, data2);
         // createHistogram(data1, data2);
     }).catch(function(err) {
