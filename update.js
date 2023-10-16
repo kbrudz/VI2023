@@ -217,7 +217,108 @@ function updateParallel(data) {
     //   .append("title")
     //   .text((d) => d.title);
   }
-  
+  function updateChordDiagram(delays, temp) {
+    console.log('Inside updateChordDiagram:', delays, temp);
+
+    const svgWidth = 650;
+    const svgHeight = 550;
+    const margin = { top: 0, right: 10, bottom: 10, left: 0 };
+    const width = svgWidth - margin.left - margin.right;
+    const height = svgHeight - margin.top - margin.bottom;
+
+    const outerRadius = svgWidth * 0.38 - 40;
+    const innerRadius = outerRadius - 20;
+
+    const svg = d3.select("#chordDiagram");
+
+    const regions = ["west", "south", "midwest", "northeast"];
+
+    const delaysMatrix = regions.map((sourceRegion) =>
+        regions.map((targetRegion) => {
+            const sum = d3.sum(delays.filter(d => stateToRegion[d.ORIGIN_STATE] === sourceRegion && stateToRegion[d.DEST_STATE] === targetRegion), d => d.DEP_DELAY);
+            return sourceRegion === targetRegion ? 0 : sum;
+        })
+    );
+
+    const chord = d3.chord()
+        .padAngle(0.05)
+        .sortSubgroups(d3.descending);
+
+    const arc = d3.arc()
+        .innerRadius(innerRadius)
+        .outerRadius(outerRadius);
+
+    const ribbon = d3.ribbon()
+        .radius(innerRadius);
+
+    const chords = chord(delaysMatrix);
+
+    const grads = svg.selectAll("defs linearGradient")
+        .data(chords);
+
+    grads.enter()
+        .append("linearGradient")
+        .attr("id", function (d) {
+            return `chordGradient-${d.source.index}-${d.target.index}`;
+        })
+        .attr("gradientUnits", "userSpaceOnUse")
+        .attr("x1", function (d) {
+            return innerRadius * Math.cos((d.source.endAngle - d.source.startAngle) / 2 + d.source.startAngle - Math.PI / 2);
+        })
+        .attr("y1", function (d) {
+            return innerRadius * Math.sin((d.source.endAngle - d.source.startAngle) / 2 + d.source.startAngle - Math.PI / 2);
+        })
+        .attr("x2", function (d) {
+            return innerRadius * Math.cos((d.target.endAngle - d.target.startAngle) / 2 + d.target.startAngle - Math.PI / 2);
+        })
+        .attr("y2", function (d) {
+            return innerRadius * Math.sin((d.target.endAngle - d.target.startAngle) / 2 + d.target.startAngle - Math.PI / 2);
+        });
+
+    grads.append("stop")
+        .attr("offset", "0%")
+        .attr("stop-color", function (d) {
+            return regionColors[regions[d.source.index]];
+        });
+
+    grads.append("stop")
+        .attr("offset", "100%")
+        .attr("stop-color", function (d) {
+            return regionColors[regions[d.target.index]];
+        });
+
+    const groups = svg.selectAll("g.group")
+        .data(chords.groups);
+
+    groups.exit().remove();
+
+    groups.enter()
+        .append("g")
+        .attr("class", "group");
+
+    groups.select("path")
+        .style("fill", (d) => regionColors[regions[d.index]])
+        .style("stroke", (d) => regionColors[regions[d.index]])
+        .attr("d", arc);
+
+    groups.select("text")
+        .attr("x", 6)
+        .attr("dy", 15)
+        .select("textPath")
+        .attr("xlink:href", (d) => `#group-arc-${d.index}`)
+        .text((d) => regions[d.index]);
+
+    const chordPaths = svg.selectAll("path.chord")
+        .data(chord(delaysMatrix));
+
+    chordPaths.exit().remove();
+
+    chordPaths.transition()
+        .duration(1000)
+        .style("fill", function (d) {
+            return `url(#chordGradient-${d.source.index}-${d.target.index})`;
+        });
+}
 //   // Function to update the line chart with new data
 //   function updateLineChart(data) {
 //     // Select the SVG element of the line chart

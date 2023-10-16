@@ -389,8 +389,8 @@ function createChordDiagram(delays, temp) {
     const width = svgWidth - margin.left - margin.right;
     const height = svgHeight - margin.top - margin.bottom;
 
-    const outerRadius = svgWidth * 0.4 - 40;
-    const innerRadius = outerRadius - 30;
+    const outerRadius = svgWidth * 0.38 - 40;
+    const innerRadius = outerRadius - 20;
 	
     const svg = d3
         .select("#chordDiagram")
@@ -453,7 +453,36 @@ function createChordDiagram(delays, temp) {
         .attr("stop-color", function (d) {
             return regionColors[regions[d.target.index]];
         });
+	// Create the arcs + shows region when you hover over it
+	const groups = svg
+        .selectAll("g.group")
+        .data(chords.groups)
+        .enter()
+        .append("g")
+        .attr("class", "group");
 
+    groups
+        .append("path")
+        .style("fill", (d) => regionColors[regions[d.index]])
+        .style("stroke", (d) => regionColors[regions[d.index]])
+        .attr("d", arc)
+        .style("cursor", "pointer")
+        .on("mouseover", handleMouseOver)
+        .on("mouseout", hideTooltip);
+
+    groups
+        .append("text")
+        .attr("x", 6)
+        .attr("dy", 15)
+        .append("textPath")
+        .attr("xlink:href", (d) => `#group-arc-${d.index}`)
+        .text((d) => regions[d.index]);
+
+	function handleMouseOver(event, d) {
+			const tooltip = d3.select("#tooltip");
+			tooltip.transition().duration(200).style("opacity", 0.9);
+			tooltip.html(`Region: ${regions[d.index]}`);
+		}
     svg.selectAll("path.chord")
         .data(chord(delaysMatrix))
         .enter().append("path")
@@ -468,3 +497,4 @@ function createChordDiagram(delays, temp) {
 		// .on("mouseout.second", unhighlight)
         .attr("d", ribbon);
 }
+

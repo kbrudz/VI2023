@@ -36,33 +36,37 @@ function startDashboard() {
 
 // // This function updates the visualizations based on the selected data type.
 function updateIdioms(data) {
-
   // Use a switch statement to check which data type is selected.
   switch (data) {
     case "west":
         // If "old" is selected, update the visualizations with data before or equal to 2010.
         updateParallel(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === "west"));
         updateStream(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === "west"),globalTemp.filter((d) => stateToRegion[d.iso_region] === "west"));
+        updateChordDiagram(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === "west"),globalTemp.filter((d) => stateToRegion[d.iso_region] === "west"));
         break;
     case "south":
 //       // If "new" is selected, update the visualizations with data after 2010.
         updateParallel(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === "south"));
         updateStream(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === "south"),globalTemp.filter((d) => stateToRegion[d.iso_region] === "south"));
+        updateChordDiagram(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === "south"),globalTemp.filter((d) => stateToRegion[d.iso_region] === "south"));
         break;
     case "midwest":
         // If "old" is selected, update the visualizations with data before or equal to 2010.
         updateParallel(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === "midwest"));
         updateStream(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === "midwest"),globalTemp.filter((d) => stateToRegion[d.iso_region] === "midwest"));
+        updateChordDiagram(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === "midwest"),globalTemp.filter((d) => stateToRegion[d.iso_region] === "midwest"));
         break;
     case "northeast":
 //       // If "new" is selected, update the visualizations with data after 2010.
         updateParallel(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === "northeast"));
         updateStream(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === "northeast"),globalTemp.filter((d) => stateToRegion[d.iso_region] === "northeast"));
+        updateChordDiagram(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === "northeast"),globalTemp.filter((d) => stateToRegion[d.iso_region] === "northeast"));
         break;
     default:
 //       // If no specific data type is selected, update the visualizations with all the data.
         updateParallel(globalDelays);
         updateStream(globalDelays, globalTemp);
+        updateChordDiagram(globalDelays, globalTemp);
         break;
   }
 }
