@@ -220,6 +220,9 @@ function updateParallel(data) {
   function updateChordDiagram(delays, temp) {
     console.log('Inside updateChordDiagram:', delays, temp);
 
+    const svg = d3.select("#chordDiagram").select("svg").select("g");
+    svg.selectAll("*").remove(); 
+
     const svgWidth = 650;
     const svgHeight = 550;
     const margin = { top: 0, right: 10, bottom: 10, left: 0 };
@@ -229,16 +232,15 @@ function updateParallel(data) {
     const outerRadius = svgWidth * 0.38 - 40;
     const innerRadius = outerRadius - 20;
 
-    const svg = d3.select("#chordDiagram");
-
     const regions = ["west", "south", "midwest", "northeast"];
 
-    const delaysMatrix = regions.map((sourceRegion) =>
-        regions.map((targetRegion) => {
-            const sum = d3.sum(delays.filter(d => stateToRegion[d.ORIGIN_STATE] === sourceRegion && stateToRegion[d.DEST_STATE] === targetRegion), d => d.DEP_DELAY);
-            return sourceRegion === targetRegion ? 0 : sum;
-        })
-    );
+
+	const delaysMatrix = regions.map((sourceRegion) =>
+		regions.map((targetRegion) => {
+			const sum = d3.sum(delays.filter(d => stateToRegion[d.ORIGIN_STATE] === sourceRegion && stateToRegion[d.DEST_STATE] === targetRegion), d => d.DEP_DELAY);
+			return sourceRegion === targetRegion ? 0 : sum;
+		})
+	);
 
     const chord = d3.chord()
         .padAngle(0.05)
@@ -253,11 +255,9 @@ function updateParallel(data) {
 
     const chords = chord(delaysMatrix);
 
-    const grads = svg.selectAll("defs linearGradient")
-        .data(chords);
-
-    grads.enter()
-        .append("linearGradient")
+    const grads = svg.append("defs").selectAll("linearGradient")
+        .data(chords)
+        .enter().append("linearGradient")
         .attr("id", function (d) {
             return `chordGradient-${d.source.index}-${d.target.index}`;
         })
@@ -288,37 +288,51 @@ function updateParallel(data) {
         });
 
     const groups = svg.selectAll("g.group")
-        .data(chords.groups);
-
-    groups.exit().remove();
-
-    groups.enter()
+        .data(chords.groups)
+        .enter()
         .append("g")
         .attr("class", "group");
 
-    groups.select("path")
+    groups.append("path")
         .style("fill", (d) => regionColors[regions[d.index]])
         .style("stroke", (d) => regionColors[regions[d.index]])
-        .attr("d", arc);
+        .attr("d", arc)
+        .style("cursor", "pointer")
+        .on("mouseover", handleMouseOver)
+        .on("mouseout", hideTooltip);
 
-    groups.select("text")
+    groups.append("text")
         .attr("x", 6)
         .attr("dy", 15)
-        .select("textPath")
+        .append("textPath")
         .attr("xlink:href", (d) => `#group-arc-${d.index}`)
         .text((d) => regions[d.index]);
 
+    function handleMouseOver(event, d) {
+        const tooltip = d3.select("#tooltip");
+        tooltip.transition().duration(200).style("opacity", 0.9);
+        tooltip.html(`Region: ${regions[d.index]}`);
+    }
+
     const chordPaths = svg.selectAll("path.chord")
-        .data(chord(delaysMatrix));
-
-    chordPaths.exit().remove();
-
-    chordPaths.transition()
-        .duration(1000)
+        .data(chords)
+        .enter().append("path")
+        .attr("class", "chord")
         .style("fill", function (d) {
             return `url(#chordGradient-${d.source.index}-${d.target.index})`;
-        });
+        })
+        .style("opacity", 0.8)
+        .on("mouseover", (event, d) => {
+            showTooltip(event, d);
+        })
+        .on("mouseout", hideTooltip)
+        .attr("d", ribbon);
+		
 }
+
+
+
+
 //   // Function to update the line chart with new data
 //   function updateLineChart(data) {
 //     // Select the SVG element of the line chart

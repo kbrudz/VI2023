@@ -36,6 +36,7 @@ function startDashboard() {
 
 // // This function updates the visualizations based on the selected data type.
 function updateIdioms(data) {
+
   // Use a switch statement to check which data type is selected.
   switch (data) {
     case "west":
