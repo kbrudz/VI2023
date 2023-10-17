@@ -221,7 +221,7 @@ function updateParallel(data) {
     console.log('Inside updateChordDiagram:', delays, temp);
 
     const svg = d3.select("#chordDiagram").select("svg").select("g");
-    svg.selectAll("*").remove(); 
+    svg.selectAll("*").remove();
 
     const svgWidth = 650;
     const svgHeight = 550;
@@ -234,13 +234,12 @@ function updateParallel(data) {
 
     const regions = ["west", "south", "midwest", "northeast"];
 
-
-	const delaysMatrix = regions.map((sourceRegion) =>
-		regions.map((targetRegion) => {
-			const sum = d3.sum(delays.filter(d => stateToRegion[d.ORIGIN_STATE] === sourceRegion && stateToRegion[d.DEST_STATE] === targetRegion), d => d.DEP_DELAY);
-			return sourceRegion === targetRegion ? 0 : sum;
-		})
-	);
+    const delaysMatrix = regions.map(sourceRegion =>
+        regions.map(targetRegion => {
+            const sum = d3.sum(delays.filter(d => stateToRegion[d.ORIGIN_STATE] === sourceRegion && stateToRegion[d.DEST_STATE] === targetRegion), d => d.DEP_DELAY);
+            return sourceRegion === targetRegion ? 0 : sum;
+        })
+    );
 
     const chord = d3.chord()
         .padAngle(0.05)
@@ -250,8 +249,11 @@ function updateParallel(data) {
         .innerRadius(innerRadius)
         .outerRadius(outerRadius);
 
+    // Modyfikacja generatora ribbon
     const ribbon = d3.ribbon()
-        .radius(innerRadius);
+        .radius(innerRadius)
+        .startAngle(d => d.startAngle)
+        .endAngle(d => d.endAngle);
 
     const chords = chord(delaysMatrix);
 
@@ -327,8 +329,9 @@ function updateParallel(data) {
         })
         .on("mouseout", hideTooltip)
         .attr("d", ribbon);
-		
 }
+
+
 
 
 

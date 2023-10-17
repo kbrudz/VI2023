@@ -2,11 +2,11 @@
 var globalDelays, globalTemp, globalRegions;
 
 // Define margins for the visualizations. 
-const margin = {top: 30, right: 10, bottom: 10, left: 0};
+const margin = {top: 10, right: 10, bottom: 10, left: 10};
 
 // Calculate the width and height of the visualizations based on the margins.
-const width = 1800 - margin.left - margin.right,
-    widthParallel = 1800 - margin.left - margin.right,
+const width = 2000 - margin.left - margin.right,
+    widthParallel = 2000 - margin.left - margin.right,
     height = 380 - margin.top - margin.bottom;
 
 // This function initiates the dashboard and loads the JSON data.

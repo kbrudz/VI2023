@@ -167,8 +167,8 @@ function createParallelCoords(delays, temp){
 	// DONE fix grid layout based on lab4
 
       // set the dimensions and margins of the graph
-    const margin = {top: 30, right: 30, bottom: 10, left: 0},
-    width = 1800 - margin.left - margin.right,
+    const margin = {top: 30, right: 0, bottom: 10, left: 50},
+    width = 2000 - margin.left - margin.right,
     height = 380 - margin.top - margin.bottom;
 
     // Group the data by ORIGIN_AIRPORT and calculate the sums and means
@@ -383,13 +383,13 @@ function createChordDiagram(delays, temp) {
 	
     console.log('Inside createChordDiagram:', delays, temp);
 
-    const svgWidth = 650;
+    const svgWidth = 640;
     const svgHeight = 550;
-    const margin = { top: 0, right: 10, bottom: 10, left: 0 };
+    const margin = { top: 10, right: 10, bottom: 10, left: 0 };
     const width = svgWidth - margin.left - margin.right;
     const height = svgHeight - margin.top - margin.bottom;
 
-    const outerRadius = svgWidth * 0.38 - 40;
+    const outerRadius = svgWidth * 0.39 - 40;
     const innerRadius = outerRadius - 20;
 	
     const svg = d3
@@ -497,4 +497,3 @@ function createChordDiagram(delays, temp) {
 		// .on("mouseout.second", unhighlight)
         .attr("d", ribbon);
 }
-
