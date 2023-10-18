@@ -77,7 +77,6 @@ function updateParallel(data) {
         .duration(4000);
 	foreground
         .enter()
-		.attr("class", "foreground")
         .append("path")
 		.attr("class", (d) => d.ORIGIN)
 		.attr("d", path)
