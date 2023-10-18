@@ -77,12 +77,20 @@ function updateParallel(data) {
         .duration(4000);
 	foreground
         .enter()
+		.attr("class", "foreground")
         .append("path")
 		.attr("class", (d) => d.ORIGIN)
 		.attr("d", path)
 		.style("stroke", (d) => regionColors[stateToRegion[d.ORIGIN_STATE]])
 		.style("stroke-width", 1)
 		.style("fill", "none")
+		.style("cursor", "pointer")
+		.style("pointer-events", "visible")
+		// .on("mouseover", handleMouseOver) // Functi
+		.on("mouseover", (event, d)=>{ showTooltip(event, d);})
+		// .on("mouseover.second", (event, d)=>{ highlight(event, d)})
+		.on("mouseout", hideTooltip) // Function defined below
+		// .on("mouseout.second", unhighlight)
         .transition()
         .duration(4000);
   
