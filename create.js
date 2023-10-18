@@ -26,20 +26,17 @@ const stateToRegion = {
 
 const regionColors = {"west":"#F5C225", "south":"#6b17fc", "midwest":"#75C700", "northeast":"#F53A29"}
 
+const tempColorScale = d3.scaleLinear()
+		.range(["#05061a", "#1c2069", "#f2fcf7","#ff230f"])
+		.domain([-30, -10, 	10, 30]);
+
 // Function to create a bar chart
 function createStreamGraph(delays, temp) {
     // Select the #streamGraph element and append an SVG to it
-    // console.log('here1');
-
 	// All of these are different ways of formatting the data in an attempt to make it fit for the area chart
-	const delaysFiltered1 = delays.filter(
-		d => (d.DEP_DELAY !== null && d.FL_DATE !== null && d.ORIGIN_STATE !== null )
+	const delaysFiltered = delays.filter(
+		d => (d.DEP_DELAY && d.FL_DATE && d.ORIGIN_STATE && stateToRegion[d.ORIGIN_STATE])
 	);
-	console.log("f1",delaysFiltered1);
-	const delaysFiltered = delaysFiltered1.filter(
-		d => (!(stateToRegion[d.ORIGIN_STATE] == null))
-	);
-	console.log("f2",delaysFiltered);
 
 	const delaysPerDate = d3.rollups(delaysFiltered, 
 		v => d3.sum(v, d => Math.max(d.DEP_DELAY, 0)), 
@@ -58,23 +55,22 @@ function createStreamGraph(delays, temp) {
 		d => d.Date
 	).flatMap(
 		([k1, v1]) => ({date: k1, avgTempC: v1.avgTempC, avgTempF: v1.avgTempF}));
-	// console.log("temp: ",temperature);
+	//console.log("temp: ",temperature);
 
-    // set the dimensions and margins of the graph
-	// var margin = {top: 30, right: 10, bottom: 10, left: 10}
+    //set the dimensions and margins of the graph
+	//var margin = {top: 30, right: 10, bottom: 10, left: 10}
     const margin = { top: 20, right: 20, bottom: 20, left: 20 },
     width = 600 - margin.left - margin.right,
     height = 400 - margin.top - margin.bottom;
 
 	// append the svg object to the body of the page
-	var svg = d3.select("#streamGraph")
-	.append("svg")
-	.attr("width", width + margin.left + margin.right)
-	.attr("height", height + margin.top + margin.bottom)
-	.append("g")
-	.attr("transform",
-		"translate(" + margin.left + "," + margin.top + ")")
-	.attr('viewBox', '0 0 600 400');
+	let svg = d3.select("#streamGraph")
+		.append("svg")
+		.attr("width", width + margin.left + margin.right)
+		.attr("height", height + margin.top + margin.bottom)
+		.append("g")
+		.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+		.attr('viewBox', '0 0 600 400');
 
 	const xScale = d3.scaleTime()
 		.domain([new Date("2018-12-01"), new Date("2018-12-31")])
@@ -84,16 +80,16 @@ function createStreamGraph(delays, temp) {
 		.domain([0, d3.max(delaysPerDate, d => d.delay)])
 		.nice()
 		.range([height, 0]);
-	const lineGenerators = {};
 
-console.log("filter",delaysPerDate);
+	const lineGenerators = {};
+	//console.log("filter",delaysPerDate);
 	delaysPerDate.forEach(d => {
 		if (isNaN(d.delay) || isNaN(d.region) || isNaN(d.date)){
-			// console.log("nan values",d);
-			// d.delay = 0;
-			// d.region = "nowhere";
-			// d.date = new Date("1-1-1");
-			// console.log("nan values",d);
+			//console.log("nan values",d);
+			//d.delay = 0;
+			//d.region = "nowhere";
+			//d.date = new Date("1-1-1");
+			//console.log("nan values",d);
 		}
 		if (!lineGenerators[d.region]) {
 			lineGenerators[d.region] = d3.line()
@@ -101,7 +97,7 @@ console.log("filter",delaysPerDate);
 				.y(d => yScale(d.delay));
 		}
 	});
-	
+
 	svg.append("g")
 		.attr("class", "x-axis")
 		.attr("transform", `translate(0, ${height})`)
@@ -111,23 +107,24 @@ console.log("filter",delaysPerDate);
 		.attr("class", "y-axis")
 		.call(d3.axisLeft(yScale));
 
-	console.log("temp", temp);
-	var temperatureValues = d3.map(temperature, d => d.avgTempC);
-	var color = d3.scaleLinear()
-		.range(["#8B0000", "#ffefef", "#00008B"])
-		.domain([d3.min(temperatureValues),(d3.min(temperatureValues)+d3.min(temperatureValues)/2), d3.max(temperatureValues)]);
-	var days = d3.map(temperature, d => new Date(d.date).getDate());
-	var dates = d3.map(temperature, d => d.date);
+	//console.log("temp", temp);
+	const temperatureValues = d3.map(temperature, d => d.avgTempC);
+	const days = d3.map(temperature, d => new Date(d.date).getDate());
+	const dates = d3.map(temperature, d => d.date);
+
+	console.log("temperatureValues: ",temperatureValues)
+
+	console.log(`min tmp: ${Math.min(...temperatureValues)} max tmp: ${Math.max(...temperatureValues)}`);
 
 	// Build X scales and axis:
-	var x = d3.scaleBand()
-		.range([ 0, width ])
+	const x = d3.scaleBand()
+		.range([ 1, width + 1 ])
 		.domain(dates)
-		.padding(0.01);
-	var xDays = d3.scaleBand()
-		.range([ 0, width ])
+		.padding(0);
+	const xDays = d3.scaleBand()
+		.range([ 1, width + 1 ])
 		.domain(days)
-		.padding(0.01);
+		.padding(0);
 	svg.append("g")
 		.attr("class", "axisXDays")
 		.attr("transform", "translate(0," + height + ")")
@@ -139,12 +136,12 @@ console.log("filter",delaysPerDate);
       .enter()
       .append("rect")
 	  .attr("class", "rect")
-      .attr("fill", (d) => color(d.avgTempC))
+    .attr("fill", (d) => tempColorScale(d.avgTempC))
 	  .attr("opacity", 0.8)
-      .attr("x", function(d) {return x(d.date) })
-    //   .attr("y", function(d) { return y(d.avgTempC) })
-      .attr("width", x.bandwidth() )
-      .attr("height", height );
+    .attr("x", function(d) {return x(d.date) })
+    //.attr("y", function(d) { return y(d.avgTempC) })
+    .attr("width", x.bandwidth() )
+    .attr("height", height );
 
 	console.log("filter",delaysPerDate);
 	const lines = svg.selectAll(".line")
@@ -152,13 +149,12 @@ console.log("filter",delaysPerDate);
 		.enter()
 		.append("path")
 		.attr("class", "line")
-		.attr("d", d => lineGenerators[d](delaysPerDate.filter(item => item.region === d)))
-		.style("stroke", d => regionColors[d])
-		.style("stroke-width", 3)
+		.attr("d", d => lineGenerators[d](delaysPerDate.filter(item => item.region === d))).style("stroke", d => regionColors[d])
+		.style("stroke-width", 5)
 		.style("fill", "none");
 }
 
-function createParallelCoords(delays, temp){
+function createParallelCoords(delays, temp) {
 
 	// TODO: 
 	// Highlight regions ?
