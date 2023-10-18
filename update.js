@@ -50,8 +50,8 @@ function updateParallel(data) {
 	var line = d3.line();
 
     // Select all existing bars and bind the data to them
-    const background = svg.selectAll(".background").selectAll("path").data(formattedData);
-    const foreground = svg.selectAll(".foreground").selectAll("path").data(formattedData);
+    const background = svg.selectAll(".background").selectAll("path").data(formattedData, (d) => d.ORIGIN_AIRPORT);
+    const foreground = svg.selectAll(".foreground").selectAll("path").data(formattedData, (d) => d.ORIGIN_AIRPORT);
 
     // Update existing bars with transitions for position, width, height, and color
     background
@@ -176,7 +176,7 @@ function updateParallel(data) {
   
     // Select all existing circles and bind the data to them
     const rects = svg.selectAll(".rect")
-		.data(temperature, function(d) {return d.date+':'+d.avgTempC;});
+		.data(temperature, function(d) {return d.date;});
   
     // Update existing circles with transitions for position and radius
     rects

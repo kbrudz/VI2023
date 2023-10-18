@@ -24,7 +24,7 @@ const stateToRegion = {
 	"US-CT":"northeast","US-ME":"northeast", "US-NJ":"northeast","US-RI":"northeast"
 }
 
-const regionColors = {"west":"#F5C225", "south":"#5872F5", "midwest":"#75C700", "northeast":"#F53A29"}
+const regionColors = {"west":"#F5C225", "south":"#6b17fc", "midwest":"#75C700", "northeast":"#F53A29"}
 
 // Function to create a bar chart
 function createStreamGraph(delays, temp) {
@@ -135,7 +135,7 @@ console.log("filter",delaysPerDate);
 	// console.log("x", [d3.min(temperature, d => d.avgTempC),d3.max(temperature, d => d.avgTempC)]);
 
 	svg.selectAll()
-      .data(temperature, function(d) {return d.date+':'+d.avgTempC;})
+      .data(temperature, function(d) {return d.date;})
       .enter()
       .append("rect")
 	  .attr("class", "rect")
@@ -224,14 +224,14 @@ function createParallelCoords(delays, temp){
 	background = svg.append("g")
 		.attr("class", "background")
 		.selectAll("path")
-		.data(formattedData)
+		.data(formattedData, (d) => d.ORIGIN_AIRPORT)
 		.enter().append("path")
 		.attr("d", path);
 	// Add blue foreground lines for focus.
 	foreground = svg.append("g")
 		.attr("class", "foreground")
 		.selectAll("path")
-		.data(formattedData)
+		.data(formattedData, (d) => d.ORIGIN_AIRPORT)
 		.enter().append("path")
 		.attr("class", (d) => d.ORIGIN)
 		.attr("d", path)
@@ -291,7 +291,11 @@ function createParallelCoords(delays, temp){
 		var g = svg.selectAll(".dimension");
 		g.append("g")
 			.attr("class", "axis")
-			.each(function(d) {  d3.select(this).call(d3.axisLeft(y[d]));})
+			.each(function(d) {  
+				if (d == "CANCELLED_MEAN" || d == "DIVERTED_MEAN")
+					d3.select(this).call(d3.axisLeft(y[d]));
+				else {d3.select(this).call(d3.axisLeft(y[d]).tickFormat(d3.format(".2s")));}
+			})
 			//text does not show up because previous line breaks somehow
 			.append("text")
 			.attr("fill", "black")
@@ -319,27 +323,27 @@ function createParallelCoords(delays, temp){
 			.attr("width", 16);  
 
 	// TODO: Highlight the specie that is hovered
-	function highlight (event, d){
-		// console.log("highlight", d);
-		// first every group turns grey
-		d3.selectAll(".foreground")
-		  .transition().duration(200)
-		  .style("stroke", "lightgrey")
-		  .style("opacity", "0.2");
-		// Second the hovered specie takes its color
-		d3.select("." + d.ORIGIN)
-		  .transition().duration(200)
-		  .style("stroke", regionColors[stateToRegion[d.ORIGIN_STATE]])
-		  .style("opacity", "1");
-	  }
-	// Unhighlight
-	function unhighlight(d){
-		// console.log("unhighlight", d.ORIGIN);
-		d3.selectAll(".foreground")
-			.transition().duration(200).delay(10000)
-			.style("stroke", (d) => regionColors[stateToRegion[d.ORIGIN_STATE]])
-			.style("opacity", "1")
-	}
+	// function highlight (event, d){
+	// 	// console.log("highlight", d);
+	// 	// first every group turns grey
+	// 	d3.selectAll(".foreground")
+	// 	  .transition().duration(200)
+	// 	  .style("stroke", "lightgrey")
+	// 	  .style("opacity", "0.2");
+	// 	// Second the hovered specie takes its color
+	// 	d3.select("." + d.ORIGIN)
+	// 	  .transition().duration(200)
+	// 	  .style("stroke", regionColors[stateToRegion[d.ORIGIN_STATE]])
+	// 	  .style("opacity", "1");
+	//   }
+	// // Unhighlight
+	// function unhighlight(d){
+	// 	// console.log("unhighlight", d.ORIGIN);
+	// 	d3.selectAll(".foreground")
+	// 		.transition().duration(200).delay(10000)
+	// 		.style("stroke", (d) => regionColors[stateToRegion[d.ORIGIN_STATE]])
+	// 		.style("opacity", "1")
+	// }
 	// Returns the path for a given data point.
 	function path(d) {
 		return line(dimensions.map(function(p) { return [position(p), y[p](d[p])]; }));
