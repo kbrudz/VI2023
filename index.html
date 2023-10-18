@@ -83,10 +83,10 @@
 	</div>
     <!-- Buttons to update the data visualization -->
     <div class="button-container">
-		<button onclick="updateIdioms('midwest')">mid Data</button>
-		<button onclick="updateIdioms('south')">south Data</button>
-		<button onclick="updateIdioms('west')">West Data</button>
-		<button onclick="updateIdioms('all')">All Data</button>
+		<button onclick="updateIdioms(['midwest'])">Midwest Data</button>
+		<button onclick="updateIdioms(['south'])">South Data</button>
+		<button onclick="updateIdioms(['west', 'northeast'])">West+NE Data</button>
+		<button onclick="updateIdioms(['midwest','south','west','northeast'])">All Data</button>
 	  </div>
     <!-- The main grid layout of the dashboard -->
 	<!-- Create the dashboard put chord diagram left size, stream graph right size, parallel coordinates bottom -->

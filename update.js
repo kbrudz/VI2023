@@ -136,16 +136,45 @@ function updateParallel(data) {
 	}
 }
   
-  // Function to update the scatter plot with new data
-  function updateStream(delays, temp) {
+// Function to update the graph with new data
+function updateStream(delays, temp) {
+    const delaysFiltered = delays.filter(
+		d => (d.DEP_DELAY && d.FL_DATE && d.ORIGIN_STATE && stateToRegion[d.ORIGIN_STATE])
+	);
 	const margin = { top: 20, right: 20, bottom: 20, left: 20 },
     width = 600 - margin.left - margin.right,
     height = 400 - margin.top - margin.bottom;
 
-    // Select the SVG element of the scatter plot
+    // Select the SVG element of the graph
     const svg = d3.select("#streamGraph").select("svg").select("g");
   
-	const temperature = d3.rollups(
+    const delaysPerDate = d3.rollups(delaysFiltered, 
+		v => d3.sum(v, d => Math.max(d.DEP_DELAY, 0)), 
+		d => d.FL_DATE,  
+		d => stateToRegion[d.ORIGIN_STATE]
+	).flatMap(
+		([k1, v1]) => [...v1].map(([k2, v2]) => ({date: k1, region: k2, delay: v2}))
+	);
+
+    const xScale = d3.scaleTime()
+		.domain([new Date("2018-12-01"), new Date("2018-12-31")])
+		.range([0, width]);
+
+	const yScale = d3.scaleLinear()
+		.domain([0, d3.max(delaysPerDate, d => d.delay)])
+		.nice()
+		.range([height, 0]);
+
+	const lineGenerators = {};
+    delaysPerDate.forEach(d => {
+		if (!lineGenerators[d.region]) {
+			lineGenerators[d.region] = d3.line()
+				.x(d => xScale(new Date(d.date)))
+				.y(d => yScale(d.delay));
+		}
+	});
+
+	const avgTemp = d3.rollups(
 		temp,
 		group => ({
 			avgTempC: d3.mean(group, d => d.AvgTemperatureC),
@@ -153,61 +182,60 @@ function updateParallel(data) {
 		}),
 		d => d.Date
 	).flatMap(
-		([k1, v1]) => ({date: k1, avgTempC: v1.avgTempC, avgTempF: v1.avgTempF}));
-	
-    // Create scales for the plot
-    var temperatureValues = d3.map(temperature, d => d.avgTempC);
-	var color = d3.scaleLinear()
-		.range(["red", "#ffefef", "blue"])
-		.domain([d3.min(temperatureValues),(d3.min(temperatureValues)+d3.min(temperatureValues)/2), d3.max(temperatureValues)]);
-	var days = d3.map(temperature, d => new Date(d.date).getDate());
-	var dates = d3.map(temperature, d => d.date);
+		([k1, v1]) => ({date: k1, avgTempC: v1.avgTempC, avgTempF: v1.avgTempF})
+    );
+
+    const days = d3.map(avgTemp, d => new Date(d.date).getDate());
+	const dates = d3.map(avgTemp, d => d.date);
 
 	// Build X scales and axis:
-	var x = d3.scaleBand()
-		.range([ 0, width ])
+	const x = d3.scaleBand()
+		.range([ 1, width + 1 ])
 		.domain(dates)
-		.padding(0.01);
-	var xDays = d3.scaleBand()
-		.range([ 0, width ])
+		.padding(0);
+    const xDays = d3.scaleBand()
+		.range([ 1, width + 1 ])
 		.domain(days)
-		.padding(0.01);
-	
-  
-    // Select all existing circles and bind the data to them
-    const rects = svg.selectAll(".rect")
-		.data(temperature, function(d) {return d.date+':'+d.avgTempC;});
-  
+		.padding(0);
+
     // Update existing circles with transitions for position and radius
-    rects
+    svg
+      .selectAll(".rect")
+      .data(avgTemp)
       .transition()
       .duration(1000)
-      .attr("fill", (d) => color(d.avgTempC))
+      .attr("fill", (d) => tempColorScale(d.avgTempC))
       .attr("x", function(d) {return x(d.date) });
-  
-    // Add new circles for any new data points and transition them to their correct position and radius
-    rects
-      .enter()
-      .append("rect")
-      .attr("class", "rect" )
-      .attr("fill", (d) => color(d.avgTempC))
-      .attr("x", function(d) {return x(d.date) })
-    //   .attr("y", function(d) { return y(d.avgTempC) })
-      .attr("width", x.bandwidth() )
-      .attr("height", height )
-      .transition()
-      .duration(500);
-  
-    // Remove any circles that are no longer in the updated data
-    rects.exit().transition().duration(500).attr("y", 0).remove();
-  
-  
+
+    console.log("keys: ",Object.keys(lineGenerators))
+
+    svg
+        .selectAll(".line")
+        .data(['midwest','south','west','northeast'])
+        .transition()
+        .duration(1000)
+        .attr("class", "line")
+        .attr("d", d => {
+            if(Object.keys(lineGenerators).includes(d))
+                return lineGenerators[d](delaysPerDate.filter(item => item.region === d));
+        })
+        .style("stroke", d => {
+            if(Object.keys(lineGenerators).includes(d)) 
+                return regionColors[d];
+            else return "none"
+        })
+
     // Update the x-axis with the new data points, formatting the labels for budget in millions
     svg
       .select(".axisXDays")
       .transition()
       .duration(500)
-      .call(d3.axisBottom(xDays));
+      .call(d3.axisBottom(xScale).ticks(d3.timeDay.every(2)).tickFormat(d3.timeFormat("%b %d")));
+    
+    svg
+      .select(".axisXDays")
+      .transition()
+      .duration(500);
   
     // Add tooltips to all circles with the movie title as the content
     // svg
@@ -216,7 +244,7 @@ function updateParallel(data) {
     //   .on("mouseout", handleMouseOut)
     //   .append("title")
     //   .text((d) => d.title);
-  }
+}
   function updateChordDiagram(delays, temp) {
     console.log('Inside updateChordDiagram:', delays, temp);
 
