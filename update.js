@@ -91,7 +91,7 @@ function updateParallel(data) {
     foreground.exit().transition().duration(100).attr("width", 0).remove();
 	
 	// svg.selectAll(".brush").remove()
-	d3.selectAll(".brush")
+	g.selectAll(".brush")
 		.each(function(d) {
 			if(y[d].name == 'scale'){
 			d3.select(this)
@@ -201,12 +201,11 @@ function updateStream(delays, temp) {
   
     // Select all existing circles and bind the data to them
     const rects = svg.selectAll(".rect")
-		.data(temperature, function(d) {return d.date;});
+		.data(avgTemp, function(d) {return d.date;});
   
     // Update existing circles with transitions for position and radius
     svg
       .selectAll(".rect")
-      .data(avgTemp)
       .transition()
       .duration(1000)
       .attr("fill", (d) => tempColorScale(d.avgTempC))
