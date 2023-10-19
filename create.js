@@ -27,22 +27,27 @@ const stateToRegion = {
 
 const regionColors = {"west":"#F5C225", "south":"#6b17fc", "midwest":"#75C700", "northeast":"#F53A29"}
 
-// const tempColorScale = d3.scaleLinear()
-// 		.range(["#8B0000", "red", "blue","#00008B"])
-// 		.domain([-30, -10, 	10, 30]);
 var tempColorScale = d3.scaleLinear()
 	.range(["red", "#ffefef", "blue"])
 	// .range(["#8B0000", "#ffefef", "#00008B"])
 	.domain([-30,0,30]);
-// Function to create a bar chart
+
+	// Function to create a bar chart
 function createStreamGraph(delays, temp) {
-    // Select the #streamGraph element and append an SVG to it
+	//set the dimensions and margins of the graph
+	//var margin = {top: 30, right: 10, bottom: 10, left: 10}
+	const margin = { top: 20, right: 20, bottom: 20, left: 30 },
+		width = 600 - margin.left - margin.right,
+		height = 400 - margin.top - margin.bottom;
+
+  // Select the #streamGraph element and append an SVG to it
 	// All of these are different ways of formatting the data in an attempt to make it fit for the area chart
 	const delaysFiltered = delays.filter(
-		d => (d.DEP_DELAY && d.FL_DATE && d.ORIGIN_STATE && stateToRegion[d.ORIGIN_STATE])
+		d => (d.DEP_DELAY && d.FL_DATE && d.ORIGIN_STATE && stateToRegion[d.ORIGIN_STATE] && d.DEST_STATE && stateToRegion[d.DEST_STATE])
 	);
 
-	const delaysPerDate = d3.rollups(delaysFiltered, 
+	const delaysPerDate = d3.rollups(
+		delaysFiltered, 
 		v => d3.sum(v, d => Math.max(d.DEP_DELAY, 0)), 
 		d => d.FL_DATE,  
 		d => stateToRegion[d.ORIGIN_STATE]
@@ -58,14 +63,8 @@ function createStreamGraph(delays, temp) {
 		}),
 		d => d.Date
 	).flatMap(
-		([k1, v1]) => ({date: k1, avgTempC: v1.avgTempC, avgTempF: v1.avgTempF}));
-	//console.log("temp: ",temperature);
-
-    //set the dimensions and margins of the graph
-	//var margin = {top: 30, right: 10, bottom: 10, left: 10}
-    const margin = { top: 20, right: 20, bottom: 20, left: 20 },
-    width = 600 - margin.left - margin.right,
-    height = 400 - margin.top - margin.bottom;
+		([k1, v1]) => ({date: k1, avgTempC: v1.avgTempC, avgTempF: v1.avgTempF})
+	);
 
 	// append the svg object to the body of the page
 	let svg = d3.select("#streamGraph")
@@ -105,11 +104,18 @@ function createStreamGraph(delays, temp) {
 	svg.append("g")
 		.attr("class", "x-axis")
 		.attr("transform", `translate(0, ${height})`)
-		.call(d3.axisBottom(xScale).ticks(d3.timeDay.every(2)).tickFormat(d3.timeFormat("%b %d")));
+		.call(d3
+			.axisBottom(xScale)
+			.ticks(d3.timeDay.every(2))
+			.tickFormat(d3.timeFormat("%b %d"))
+		);
 
 	svg.append("g")
 		.attr("class", "y-axis")
-		.call(d3.axisLeft(yScale));
+		.call(d3
+			.axisLeft(yScale)
+			.tickFormat(d => (d > 1000) ? (d / 1000) + "k" : d)
+		);
 
 	//console.log("temp", temp);
 	const temperatureValues = d3.map(temperature, d => d.avgTempC);
@@ -125,13 +131,15 @@ function createStreamGraph(delays, temp) {
 		.range([ 1, width + 1 ])
 		.domain(dates)
 		.padding(0);
+	
 	const xDays = d3.scaleBand()
 		.range([ 1, width + 1 ])
 		.domain(days)
 		.padding(0);
+
 	svg.append("g")
 		.attr("class", "axisXDays")
-		.attr("transform", "translate(0," + height + ")")
+		.attr("transform", "translate(0," + height + ")");
 		// .call(d3.axisBottom(xDays));
 	// console.log("x", [d3.min(temperature, d => d.avgTempC),d3.max(temperature, d => d.avgTempC)]);
 	// console.log("temp ",temp,temp.forEach(d => d.ORIGIN_AIRPORT));
@@ -160,7 +168,8 @@ function createStreamGraph(delays, temp) {
 			updateIdioms(d);
 		})
 		.style("stroke-width", 5)
-		.style("fill", "none");
+		.style("fill", "none")
+		.style("cursor", "pointer");
 }
 
 function createParallelCoords(delays, temp) {

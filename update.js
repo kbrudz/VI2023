@@ -32,9 +32,9 @@ function updateParallel(data) {
 			.domain([d3.max(d3.extent(formattedData, d => d[dim])), d3.min(d3.extent(formattedData, d => d[dim]))])
 			.range([0, height]);
 		if (dim == "CANCELLED_MEAN" || dim == "DIVERTED_MEAN")
-		yParallel[dim] = d3.scaleLinear()
-			.domain([1,0])
-			.range([0, height]);
+			yParallel[dim] = d3.scaleLinear()
+				.domain([1,0])
+				.range([0, height]);
 	});
 
 	var x = d3.scalePoint().rangeRound([0, width]).padding(1).domain(dimensions),
@@ -186,9 +186,9 @@ function updateStream(delays, temp) {
     const delaysFiltered = delays.filter(
 		d => (d.DEP_DELAY && d.FL_DATE && d.ORIGIN_STATE && stateToRegion[d.ORIGIN_STATE])
 	);
-	const margin = { top: 20, right: 20, bottom: 20, left: 20 },
-    width = 600 - margin.left - margin.right,
-    height = 400 - margin.top - margin.bottom;
+	const margin = { top: 20, right: 20, bottom: 20, left: 30 },
+		width = 600 - margin.left - margin.right,
+		height = 400 - margin.top - margin.bottom;
 
     // Select the SVG element of the graph
     const svg = d3.select("#streamGraph").select("svg").select("g");
@@ -201,7 +201,7 @@ function updateStream(delays, temp) {
 		([k1, v1]) => [...v1].map(([k2, v2]) => ({date: k1, region: k2, delay: v2}))
 	);
 
-    const xScale = d3.scaleTime()
+  const xScale = d3.scaleTime()
 		.domain([new Date("2018-12-01"), new Date("2018-12-31")])
 		.range([0, width]);
 
@@ -230,7 +230,7 @@ function updateStream(delays, temp) {
 		([k1, v1]) => ({date: k1, avgTempC: v1.avgTempC, avgTempF: v1.avgTempF})
     );
 
-    const days = d3.map(avgTemp, d => new Date(d.date).getDate());
+  const days = d3.map(avgTemp, d => new Date(d.date).getDate());
 	const dates = d3.map(avgTemp, d => d.date);
 
 	// Build X scales and axis:
@@ -269,7 +269,7 @@ function updateStream(delays, temp) {
             else return "none"
         })
 
-    // Update the x-axis with the new data points, formatting the labels for budget in millions
+    /* Update the x-axis with the new data points, formatting the labels for budget in millions
     svg
       .select(".axisXDays")
       .transition()
@@ -280,6 +280,15 @@ function updateStream(delays, temp) {
       .select(".axisXDays")
       .transition()
       .duration(500);
+		*/
+
+		svg.select(".y-axis")
+			.transition()
+			.duration(1000)
+			.call(d3
+				.axisLeft(yScale)
+				.tickFormat(d => (d > 1000) ? (d / 1000) + "k" : d)
+			);
   
     // Add tooltips to all circles with the movie title as the content
     // svg
@@ -289,7 +298,8 @@ function updateStream(delays, temp) {
     //   .append("title")
     //   .text((d) => d.title);
 }
-  function updateChordDiagram(delays, temp) {
+
+function updateChordDiagram(delays, temp) {
     // console.log('Inside updateChordDiagram:', delays, temp);
 
     const svg = d3.select("#chordDiagram").select("svg").select("g");
