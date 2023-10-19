@@ -249,7 +249,7 @@ function updateStream(delays, temp) {
 		.attr("x", function(d) {return x(d.date) });
 
     svg.selectAll(".line")
-      .data(['midwest','south','west','northeast'])
+      .data(['northeast','west','midwest','south'])
       .transition()
       .duration(1000)
       .attr("d", d => {
