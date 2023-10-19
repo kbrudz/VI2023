@@ -75,15 +75,18 @@ function createStreamGraph(delays, temp) {
 		.append("g")
 		.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
 		.attr('viewBox', '0 0 600 400');
-
 	const xScale = d3.scaleTime()
 		.domain([new Date("2018-12-01"), new Date("2018-12-31")])
 		.range([0, width]);
 
-	const yScale = d3.scaleLinear()
+		// const minDelay = d3.min(delaysPerDate, d => d.delays);
+		// const maxDelay = d3.max(delaysPerDate, d => d.delay);
+		
+		const yScale = d3.scaleLinear()
 		.domain([0, d3.max(delaysPerDate, d => d.delay)])
 		.nice()
 		.range([height, 0]);
+	
 
 	const lineGenerators = {};
 	//console.log("filter",delaysPerDate);
@@ -101,6 +104,7 @@ function createStreamGraph(delays, temp) {
 				.y(d => yScale(d.delay));
 		}
 	});
+	
 
 	svg.append("g")
 		.attr("class", "x-axis")
@@ -132,9 +136,16 @@ function createStreamGraph(delays, temp) {
 	svg.append("g")
 		.attr("class", "axisXDays")
 		.attr("transform", "translate(0," + height + ")")
+	
+	// // Add the points
+	// svg
+	// 	.append("g")
+	// 	.selectAll("dot")
+	// 	.data(temperature)
+
 		// .call(d3.axisBottom(xDays));
 	// console.log("x", [d3.min(temperature, d => d.avgTempC),d3.max(temperature, d => d.avgTempC)]);
-	// console.log("temp ",temp,temp.forEach(d => d.ORIGIN_AIRPORT));
+	console.log("temp ",temp,temp.forEach(d => d.ORIGIN_AIRPORT));
 
 	svg.selectAll()
       .data(temperature, function(d) {return d.date;})
@@ -146,21 +157,39 @@ function createStreamGraph(delays, temp) {
     .attr("x", function(d) {return x(d.date) })
     //.attr("y", function(d) { return y(d.avgTempC) })
     .attr("width", x.bandwidth() )
-    .attr("height", height );
+    .attr("height", height )
 
-	// console.log("filter",delaysPerDate);
+	function calculateDelaySum(regionCode) {
+		//calculate the sum of delays for a given region
+		const delaysForRegion = delaysPerDate.filter(item => item.region === regionCode);
+		const sum = d3.sum(delaysForRegion, d => d.delay);
+		return sum;
+	}
+	
 	const lines = svg.selectAll(".line")
-		.data(Object.keys(lineGenerators))
-		.enter()
-		.append("path")
-		.attr("class", "line")
-		.attr("d", d => lineGenerators[d](delaysPerDate.filter(item => item.region === d))).style("stroke", d => regionColors[d])
-		.on("click", function(event, d) {
-			// console.log("filtering data", d);
-			updateIdioms(d);
-		})
-		.style("stroke-width", 5)
-		.style("fill", "none");
+    .data(Object.keys(lineGenerators))
+    .enter()
+    .append("path")
+    .attr("class", "line")
+    .attr("d", d => lineGenerators[d](delaysPerDate.filter(item => item.region === d)))
+    .style("stroke", d => regionColors[d])
+    .on("click", function(event, d) {
+        updateIdioms(d);
+    })
+    .style("stroke-width", 5)
+    .style("fill", "none")
+    .style("cursor", "pointer")
+    .style("pointer-events", "visible")
+	.on("mouseover", function(event, d) {
+		showTooltip(event, {
+			ORIGIN_AIRPORT: d, // Without data - show region why???
+			// ORIGIN: 'Without data', // Without data
+			ARR_DELAY_SUM: calculateDelaySum(d),
+		});
+	})
+		
+	
+    .on("mouseout", hideTooltip);
 }
 
 function createParallelCoords(delays, temp) {
