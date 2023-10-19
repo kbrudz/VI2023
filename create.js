@@ -6,7 +6,8 @@ var dragging = {},
     dimensions,                           
     legend,
     brush_count = 0,
-    excluded_groups = [];
+    excluded_groups = [],
+	extents;
 
 const stateToRegion = {
 	//West
@@ -26,10 +27,13 @@ const stateToRegion = {
 
 const regionColors = {"west":"#F5C225", "south":"#6b17fc", "midwest":"#75C700", "northeast":"#F53A29"}
 
-const tempColorScale = d3.scaleLinear()
-		.range(["#05061a", "#1c2069", "#f2fcf7","#ff230f"])
-		.domain([-30, -10, 	10, 30]);
-
+// const tempColorScale = d3.scaleLinear()
+// 		.range(["#8B0000", "red", "blue","#00008B"])
+// 		.domain([-30, -10, 	10, 30]);
+var tempColorScale = d3.scaleLinear()
+	.range(["red", "#ffefef", "blue"])
+	// .range(["#8B0000", "#ffefef", "#00008B"])
+	.domain([-30,0,30]);
 // Function to create a bar chart
 function createStreamGraph(delays, temp) {
     // Select the #streamGraph element and append an SVG to it
@@ -112,9 +116,9 @@ function createStreamGraph(delays, temp) {
 	const days = d3.map(temperature, d => new Date(d.date).getDate());
 	const dates = d3.map(temperature, d => d.date);
 
-	console.log("temperatureValues: ",temperatureValues)
+	// console.log("temperatureValues: ",temperatureValues)
 
-	console.log(`min tmp: ${Math.min(...temperatureValues)} max tmp: ${Math.max(...temperatureValues)}`);
+	// console.log(`min tmp: ${Math.min(...temperatureValues)} max tmp: ${Math.max(...temperatureValues)}`);
 
 	// Build X scales and axis:
 	const x = d3.scaleBand()
@@ -130,6 +134,7 @@ function createStreamGraph(delays, temp) {
 		.attr("transform", "translate(0," + height + ")")
 		// .call(d3.axisBottom(xDays));
 	// console.log("x", [d3.min(temperature, d => d.avgTempC),d3.max(temperature, d => d.avgTempC)]);
+	// console.log("temp ",temp,temp.forEach(d => d.ORIGIN_AIRPORT));
 
 	svg.selectAll()
       .data(temperature, function(d) {return d.date;})
@@ -137,19 +142,23 @@ function createStreamGraph(delays, temp) {
       .append("rect")
 	  .attr("class", "rect")
     .attr("fill", (d) => tempColorScale(d.avgTempC))
-	  .attr("opacity", 0.8)
+	//   .attr("opacity", 0.8)
     .attr("x", function(d) {return x(d.date) })
     //.attr("y", function(d) { return y(d.avgTempC) })
     .attr("width", x.bandwidth() )
     .attr("height", height );
 
-	console.log("filter",delaysPerDate);
+	// console.log("filter",delaysPerDate);
 	const lines = svg.selectAll(".line")
 		.data(Object.keys(lineGenerators))
 		.enter()
 		.append("path")
 		.attr("class", "line")
 		.attr("d", d => lineGenerators[d](delaysPerDate.filter(item => item.region === d))).style("stroke", d => regionColors[d])
+		.on("click", function(event, d) {
+			// console.log("filtering data", d);
+			updateIdioms(d);
+		})
 		.style("stroke-width", 5)
 		.style("fill", "none");
 }
@@ -190,13 +199,13 @@ function createParallelCoords(delays, temp) {
 	// Define your dimensions
 	const dimensions = ["DEP_DELAY_SUM", "ARR_DELAY_SUM", "CANCELLED_MEAN", "DIVERTED_MEAN", "AIRPORT_ELEVATION"];
 	origDimensions = dimensions.slice(0);
-	const y = {};
+	const yParallel = {};
 	dimensions.forEach(dim => {
-		y[dim] = d3.scaleLinear()
+		yParallel[dim] = d3.scaleLinear()
 			.domain([d3.max(d3.extent(formattedData, d => d[dim])), d3.min(d3.extent(formattedData, d => d[dim]))])
 			.range([0, height]);
 		if (dim == "CANCELLED_MEAN" || dim == "DIVERTED_MEAN")
-		y[dim] = d3.scaleLinear()
+		yParallel[dim] = d3.scaleLinear()
 			.domain([1,0])
 			.range([0, height]);
 	});
@@ -268,13 +277,7 @@ function createParallelCoords(delays, temp) {
 				delete dragging[d];
 				// transition(d3.select(this)).attr("transform", "translate(" + x(d) + ")");
 				transition(foreground).attr("d", path);
-				transition(foreground).attr("d", path);
-				// background
-				// 	.attr("d", path)
-				//   	.transition()
-				// 	.delay(500)
-				// 	.duration(0)
-				// 	.attr("visibility", null);
+				transition(background).attr("d", path);
 					
 					var new_extents = [];
 					for(var i=0;i<dimensions.length;++i){
@@ -289,8 +292,8 @@ function createParallelCoords(delays, temp) {
 			.attr("class", "axis")
 			.each(function(d) {  
 				if (d == "CANCELLED_MEAN" || d == "DIVERTED_MEAN")
-					d3.select(this).call(d3.axisLeft(y[d]));
-				else {d3.select(this).call(d3.axisLeft(y[d]).tickFormat(d3.format(".2s")));}
+					d3.select(this).call(d3.axisLeft(yParallel[d]));
+				else {d3.select(this).call(d3.axisLeft(yParallel[d]).tickFormat(d3.format(".2s")));}
 			})
 			//text does not show up because previous line breaks somehow
 			.append("text")
@@ -304,10 +307,10 @@ function createParallelCoords(delays, temp) {
 			.attr("class", "brush")
 			.each(function(d) {
 				// console.log("brush?: ", y[d].name);
-				if(y[d].name == 'scale'){
+				if(yParallel[d].name == 'scale'){
 				// console.log(this);
 				d3.select(this)
-					.call(y[d].brush = d3.brushY()
+					.call(yParallel[d].brush = d3.brushY()
 						.extent([[-8, 0], [8,height]])
 						.on("start", brushstart)
 						.on("brush", brushing))
@@ -342,13 +345,14 @@ function createParallelCoords(delays, temp) {
 	// }
 	// Returns the path for a given data point.
 	function path(d) {
-		return line(dimensions.map(function(p) { return [position(p), y[p](d[p])]; }));
+		return line(dimensions.map(function(p) { return [position(p), yParallel[p](d[p])]; }));
 	}
 	function position(d) {
 		var v = dragging[d];
 		return v == null ? x(d) : v;
 	}
 	function transition(g) {
+		// console.log ("transitioning create", g);
 		return g.transition().duration(500);
 	}
 	
@@ -358,8 +362,8 @@ function createParallelCoords(delays, temp) {
 	}
 	function brushing(event) {
 		for(var i=0;i<dimensions.length;++i){
-			if(event.target==y[dimensions[i]].brush) {
-				  extents[i]=event.selection.map(y[dimensions[i]].invert,y[dimensions[i]]);
+			if(event.target==yParallel[dimensions[i]].brush) {
+				  extents[i]=event.selection.map(yParallel[dimensions[i]].invert,yParallel[dimensions[i]]);
 				  }
 		}
 		foreground.style("display", function(d) {
@@ -381,7 +385,7 @@ function createChordDiagram(delays, temp) {
 	// #TO DO Add boton to show only one region
 	// #TO DO Show % of delays when you choose a region
 	
-    console.log('Inside createChordDiagram:', delays, temp);
+    // console.log('Inside createChordDiagram:', delays, temp);
 
     const svgWidth = 650;
     const svgHeight = 550;

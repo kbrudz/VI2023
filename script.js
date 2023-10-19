@@ -37,7 +37,13 @@ function startDashboard() {
 // // This function updates the visualizations based on the selected data type.
 function updateIdioms(data) {
     // Use a switch statement to check which data type is selected.
-    updateParallel(globalDelays.filter((d) => data.includes(stateToRegion[d.ORIGIN_STATE])));
-    updateStream(globalDelays.filter((d) => data.includes(stateToRegion[d.ORIGIN_STATE])),globalTemp.filter((d) => data.includes((stateToRegion[d.iso_region]))));
-    updateChordDiagram(globalDelays.filter((d) => data.includes((stateToRegion[d.ORIGIN_STATE]))),globalTemp.filter((d) => data.includes((stateToRegion[d.iso_region]))));
+    if (data != "all"){
+        updateParallel(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === data));
+        updateStream(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === data), globalTemp.filter((d) => stateToRegion[d.iso_region] === data));
+        updateChordDiagram(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === data));
+    }else{
+        updateParallel(globalDelays);
+        updateStream(globalDelays, globalTemp);
+        updateChordDiagram(globalDelays);
+    }
 }

@@ -6,9 +6,9 @@ function showTooltip(event, d){
         .style("top", event.pageY + "px");
 
     document.getElementById("tooltip")
-        .innerHTML= "Airport:" + d.ORIGIN_AIRPORT + "<br>" +
-        "Region:" + stateToRegion[d.ORIGIN];
-    
+        .innerHTML= "Airport: " + d.ORIGIN_AIRPORT + "<br>" +
+        "Region: " + stateToRegion[d.ORIGIN] +"<br>" +
+        "delay: " + d.ARR_DELAY_SUM;
     
   }
 

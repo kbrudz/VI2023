@@ -1,5 +1,8 @@
 // Function to update the bar chart with new data
 function updateParallel(data) {
+	const margin = {top: 30, right: 30, bottom: 10, left: 0},
+    width = 1800 - margin.left - margin.right,
+    height = 380 - margin.top - margin.bottom;
     // Select the SVG element of the bar chart
     const svg = d3.select("#parallelCoords").select("svg").select("g");
     // Group the data by ORIGIN_AIRPORT and calculate the sums and means
@@ -17,41 +20,34 @@ function updateParallel(data) {
 		}),
 		d => d.ORIGIN_AIRPORT
 	);
-		console.log(aggregatedData);
+		// console.log(aggregatedData);
 	// Convert the aggregated data back to an array for visualization
 	const formattedData = Array.from(aggregatedData, ([key, value]) => ({ ORIGIN_AIRPORT: key, ...value }));
 
 	const dimensions = ["DEP_DELAY_SUM", "ARR_DELAY_SUM", "CANCELLED_MEAN", "DIVERTED_MEAN", "AIRPORT_ELEVATION"];
-	const y = {};
+	origDimensions = dimensions.slice(0);
+	yParallel = {};
 	dimensions.forEach(dim => {
-		y[dim] = d3.scaleLinear()
+		yParallel[dim] = d3.scaleLinear()
 			.domain([d3.max(d3.extent(formattedData, d => d[dim])), d3.min(d3.extent(formattedData, d => d[dim]))])
 			.range([0, height]);
 		if (dim == "CANCELLED_MEAN" || dim == "DIVERTED_MEAN")
-		y[dim] = d3.scaleLinear()
+		yParallel[dim] = d3.scaleLinear()
 			.domain([1,0])
 			.range([0, height]);
 	});
 
-	var x = d3.scalePoint()
-		.rangeRound([0, widthParallel])
-		.padding(1)
-		.domain(dimensions);
-	var g = svg.selectAll(".dimension")
-		.attr("transform", function(d) { return "translate(" + x(d) + ")"; })
-		
+	var x = d3.scalePoint().rangeRound([0, width]).padding(1).domain(dimensions),
+		line = d3.line(),
+		dragging = {},
+		origDimensions;
 
-    function path(d) {
-		return line(dimensions.map(function(p) { return [x(p), y[p](d[p])]; }));
-    }
-    // function emptyPath(d) {
-    //     return d3.line()(axes.map(function(p) { return [0, 0]; }));
-    // }
+
 	var line = d3.line();
 
     // Select all existing bars and bind the data to them
-    const background = svg.selectAll(".background").selectAll("path").data(formattedData, (d) => d.ORIGIN_AIRPORT);
-    const foreground = svg.selectAll(".foreground").selectAll("path").data(formattedData, (d) => d.ORIGIN_AIRPORT);
+    background = svg.selectAll(".background").selectAll("path").data(formattedData, (d) => d.ORIGIN_AIRPORT);
+    foreground = svg.selectAll(".foreground").selectAll("path").data(formattedData, (d) => d.ORIGIN_AIRPORT);
 
     // Update existing bars with transitions for position, width, height, and color
     background
@@ -66,7 +62,6 @@ function updateParallel(data) {
 		.style("stroke-width", 1)
 		.style("fill", "none");
 	
-  
     // Add new bars for any new data points and transition them to their correct position and width
     background
         .enter()
@@ -90,36 +85,79 @@ function updateParallel(data) {
     background.exit().transition().duration(100).attr("width", 0).remove();
     foreground.exit().transition().duration(100).attr("width", 0).remove();
 	
+	var g = svg.selectAll(".dimension").data(dimensions)
+		.data(dimensions)
+		.attr("transform", function(d) { return "translate(" + x(d) + ")"; })
+		.call(d3.drag()
+			.subject(function(d) { return {x: x(d)}; })
+			.on("start", function(d) {
+				dragging[d] = x(d);
+			})
+			.on("drag", function(event, d) {
+				dragging[d] = Math.min(width, Math.max(0, event.x));
+				foreground.attr("d", path);
+				background.attr("d", path);
+				dimensions.sort(function(a, b) { 
+					return position(a) - position(b); 
+				});
+				x.domain(dimensions);
+				g.attr("transform", function(d) { return "translate(" + position(d) + ")"; })
+				// console.log("dragging from update", d, position(d))
+			})
+			.on("end", function(d) {
+				delete dragging[d];
+				transition(foreground).attr("d", path);
+				transition(background).attr("d", path);
+				var new_extents = [];
+				for(var i=0;i<dimensions.length;++i){
+					new_extents.push(extents[origDimensions.indexOf(dimensions[i])]);
+					}
+					extents = new_extents;
+					origDimensions = dimensions.slice(0);
+			}));
+	// Add an axis and title.
+	g.selectAll(".axis")
+	.each(function(d) {  
+		if (d == "CANCELLED_MEAN" || d == "DIVERTED_MEAN")
+			d3.select(this).call(d3.axisLeft(yParallel[d]));
+		else {d3.select(this).call(d3.axisLeft(yParallel[d]).tickFormat(d3.format(".2s")));}
+	});
 	// svg.selectAll(".brush").remove()
 	g.selectAll(".brush")
 		.each(function(d) {
-			if(y[d].name == 'scale'){
+			if(yParallel[d].name == 'scale'){
 			d3.select(this)
-				.call(y[d].brush = d3.brushY()
+				.call(yParallel[d].brush = d3.brushY()
 					.extent([[-8, 0], [8,height]])
 					.on("start", (event, d) => brushstart(event, d))
 					.on("brush", (event, d) => brushing(event, d)))
 					.on("end", (event, d) => brushend(event, d));
 			}
 		})
-	// Add an axis and title.
-	svg.selectAll(".axis")
-		.each(function(d) {  d3.select(this).call(d3.axisLeft(y[d]));})
-		//text does not show up because previous line breaks somehow
-		.append("text")
-		.attr("fill", "black")
-		.style("text-anchor", "middle")
-		.attr("y", -9) 
-		.text(function(d) { return d; });
-
+	
+	function path(d) {
+		return line(dimensions.map(function(p) { return [position(p), yParallel[p](d[p])]; }));
+	}
+	// function emptyPath(d) {
+	//     return d3.line()(axes.map(function(p) { return [0, 0]; }));
+	// }
+	function position(d) {
+		var v = dragging[d];
+		return v == null ? x(d) : v;
+	}
+	function transition(g) {
+		// console.log ("transitioning", g);
+		return g.transition().duration(500);
+	}
+		
 	// Handles a brush event, toggling the display of foreground lines.
 	function brushstart(event) {
 		event.sourceEvent.stopPropagation();  
 	}
 	function brushing(event) {
 		for(var i=0;i<dimensions.length;++i){
-			if(event.target==y[dimensions[i]].brush) {
-				  extents[i]=event.selection.map(y[dimensions[i]].invert,y[dimensions[i]]);
+			if(event.target==yParallel[dimensions[i]].brush) {
+				  extents[i]=event.selection.map(yParallel[dimensions[i]].invert,yParallel[dimensions[i]]);
 				  }
 		}
 		foreground.style("display", function(d) {
@@ -200,18 +238,13 @@ function updateStream(delays, temp) {
 	
   
     // Select all existing circles and bind the data to them
-    const rects = svg.selectAll(".rect")
-		.data(avgTemp, function(d) {return d.date;});
-  
-    // Update existing circles with transitions for position and radius
-    svg
-      .selectAll(".rect")
-      .transition()
-      .duration(1000)
-      .attr("fill", (d) => tempColorScale(d.avgTempC))
-      .attr("x", function(d) {return x(d.date) });
-
-    console.log("keys: ",Object.keys(lineGenerators))
+	svg.selectAll(".rect")
+		.data(avgTemp, function(d) {return d.date;})
+		.transition()
+		.duration(1000)
+		.attr("fill", (d) => tempColorScale(d.avgTempC))
+		.attr("x", function(d) {return x(d.date) });
+	// console.log("keys: ",Object.keys(lineGenerators))
 
     svg
         .selectAll(".line")
@@ -250,7 +283,7 @@ function updateStream(delays, temp) {
     //   .text((d) => d.title);
 }
   function updateChordDiagram(delays, temp) {
-    console.log('Inside updateChordDiagram:', delays, temp);
+    // console.log('Inside updateChordDiagram:', delays, temp);
 
     const svg = d3.select("#chordDiagram").select("svg").select("g");
     svg.selectAll("*").remove(); 
