@@ -224,7 +224,7 @@ function createParallelCoords(delays, temp) {
 		.attr("height", height + margin.top + margin.bottom)
 	  	.append("g")
 		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
+	
 	// Add grey background lines for context.
 	background = svg.append("g")
 		.attr("class", "background")
@@ -243,12 +243,13 @@ function createParallelCoords(delays, temp) {
 		.style("stroke", (d) => regionColors[stateToRegion[d.ORIGIN_STATE]])
 		.style("stroke-width", 1)
 		.style("fill", "none")
+		.style("cursor", "pointer")
+		.style("pointer-events", "visible")
 		// .on("mouseover", handleMouseOver) // Functi
-		.on("mouseover", (event, d)=>{ showTooltip(event, d)})
+		.on("mouseover", (event, d)=>{ showTooltip(event, d);})
 		// .on("mouseover.second", (event, d)=>{ highlight(event, d)})
-		.on("mouseout", hideTooltip) // Functi
+		.on("mouseout", hideTooltip) // Function defined below
 		// .on("mouseout.second", unhighlight)
-		;
 	// Add a group element for each dimension.
 	// console.log("dim: ",dimensions);
 	var g = svg.selectAll(".dimension")
