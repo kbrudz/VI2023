@@ -301,6 +301,7 @@ function createParallelCoords(delays, temp) {
 			.attr("fill", "black")
 			.style("text-anchor", "middle")
 			.attr("y", -9) 
+			.style("cursor", "grab")
 			.text(function(d) { return d; });
 
 		// Add and store a brush for each axis.
