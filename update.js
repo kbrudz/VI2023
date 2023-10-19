@@ -230,6 +230,7 @@ function updateStream(delays, temp) {
 		([k1, v1]) => ({date: k1, avgTempC: v1.avgTempC, avgTempF: v1.avgTempF})
     );
 
+		
   const days = d3.map(avgTemp, d => new Date(d.date).getDate());
 	const dates = d3.map(avgTemp, d => d.date);
 
@@ -238,11 +239,6 @@ function updateStream(delays, temp) {
 		.range([ 1, width + 1 ])
 		.domain(dates)
 		.padding(0);
-    const xDays = d3.scaleBand()
-		.range([ 1, width + 1 ])
-		.domain(days)
-		.padding(0.01);
-	
   
     // Select all existing circles and bind the data to them
 	svg.selectAll(".rect")
@@ -251,36 +247,20 @@ function updateStream(delays, temp) {
 		.duration(1000)
 		.attr("fill", (d) => tempColorScale(d.avgTempC))
 		.attr("x", function(d) {return x(d.date) });
-	// console.log("keys: ",Object.keys(lineGenerators))
 
-    svg
-        .selectAll(".line")
-        .data(['midwest','south','west','northeast'])
-        .transition()
-        .duration(1000)
-        .attr("class", "line")
-        .attr("d", d => {
-            if(Object.keys(lineGenerators).includes(d))
-                return lineGenerators[d](delaysPerDate.filter(item => item.region === d));
-        })
-        .style("stroke", d => {
-            if(Object.keys(lineGenerators).includes(d)) 
-                return regionColors[d];
-            else return "none"
-        })
-
-    /* Update the x-axis with the new data points, formatting the labels for budget in millions
-    svg
-      .select(".axisXDays")
+    svg.selectAll(".line")
+      .data(['midwest','south','west','northeast'])
       .transition()
-      .duration(500)
-      .call(d3.axisBottom(xScale).ticks(d3.timeDay.every(2)).tickFormat(d3.timeFormat("%b %d")));
-    
-    svg
-      .select(".axisXDays")
-      .transition()
-      .duration(500);
-		*/
+      .duration(1000)
+      .attr("d", d => {
+        if(Object.keys(lineGenerators).includes(d))
+          return lineGenerators[d](delaysPerDate.filter(item => item.region === d));
+        })
+      .style("stroke", d => {
+        if(Object.keys(lineGenerators).includes(d)) 
+          return regionColors[d];
+        else return "none"
+      })
 
 		svg.select(".y-axis")
 			.transition()
