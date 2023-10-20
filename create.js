@@ -61,11 +61,11 @@ function createStreamGraph(delays, temp) {
 	).flatMap(
 		([k1, v1]) => ({date: k1, avgTempC: v1.avgTempC, avgTempF: v1.avgTempF}));
 	//console.log("temp: ",temperature);
-	
 	// append the svg object to the body of the page
+	const width = 700;
 	let svg = d3.select("#streamGraph")
 		.append("svg")
-		.attr("width", 700 )
+		.attr("width", width ) 
 		.attr("height", height + margin.top + margin.bottom)
 		.append("g")
 		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");

@@ -182,6 +182,8 @@ function updateParallel(data) {
   
 // Function to update the graph with new data
 function updateStream(delays, temp) {
+	const width = 700;
+
     const delaysFiltered = delays.filter(
 		d => (d.DEP_DELAY && d.FL_DATE && d.ORIGIN_STATE && stateToRegion[d.ORIGIN_STATE])
 	);
