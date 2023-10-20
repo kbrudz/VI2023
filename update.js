@@ -31,9 +31,9 @@ function updateParallel(data) {
 			.domain([d3.max(d3.extent(formattedData, d => d[dim])), d3.min(d3.extent(formattedData, d => d[dim]))])
 			.range([0, height]);
 		if (dim == "CANCELLED_MEAN" || dim == "DIVERTED_MEAN")
-		yParallel[dim] = d3.scaleLinear()
-			.domain([1,0])
-			.range([0, height]);
+			yParallel[dim] = d3.scaleLinear()
+				.domain([1,0])
+				.range([0, height]);
 	});
 
 	var x = d3.scalePoint().rangeRound([0, width]).padding(1).domain(dimensions),
@@ -182,7 +182,6 @@ function updateParallel(data) {
   
 // Function to update the graph with new data
 function updateStream(delays, temp) {
-	const width = 700;
 
     const delaysFiltered = delays.filter(
 		d => (d.DEP_DELAY && d.FL_DATE && d.ORIGIN_STATE && stateToRegion[d.ORIGIN_STATE])
@@ -192,14 +191,14 @@ function updateStream(delays, temp) {
     const svg = d3.select("#streamGraph").select("svg").select("g");
   
     const delaysPerDate = d3.rollups(delaysFiltered, 
-		v => d3.sum(v, d => Math.max(d.DEP_DELAY, 0)), 
+		v => d3.mean(v, d => Math.max(d.DEP_DELAY, 0)), 
 		d => d.FL_DATE,  
 		d => stateToRegion[d.ORIGIN_STATE]
 	).flatMap(
 		([k1, v1]) => [...v1].map(([k2, v2]) => ({date: k1, region: k2, delay: v2}))
 	);
 
-    const xScale = d3.scaleTime()
+  const xScale = d3.scaleTime()
 		.domain([new Date("2018-12-01"), new Date("2018-12-31")])
 		.range([0, width]);
 
@@ -232,7 +231,8 @@ function updateStream(delays, temp) {
 	console.log(`min tmp: ${Math.min(...temperatureValues)} max tmp: ${Math.max(...temperatureValues)}`);
 
 
-    const days = d3.map(avgTemp, d => new Date(d.date).getDate());
+		
+  const days = d3.map(avgTemp, d => new Date(d.date).getDate());
 	const dates = d3.map(avgTemp, d => d.date);
 
 	// Build X scales and axis:
@@ -240,11 +240,6 @@ function updateStream(delays, temp) {
 		.range([ 1, width + 1 ])
 		.domain(dates)
 		.padding(0);
-    const xDays = d3.scaleBand()
-		.range([ 1, width + 1 ])
-		.domain(days)
-		.padding(0.01);
-	
   
     // Select all existing circles and bind the data to them
 	svg.selectAll(".rect")
@@ -253,35 +248,28 @@ function updateStream(delays, temp) {
 		.duration(1000)
 		.attr("fill", (d) => tempColorScale(d.avgTempC))
 		.attr("x", function(d) {return x(d.date) });
-	// console.log("keys: ",Object.keys(lineGenerators))
 
-    svg
-        .selectAll(".line")
-        .data(['midwest','south','west','northeast'])
-        .transition()
-        .duration(1000)
-        .attr("class", "line")
-        .attr("d", d => {
-            if(Object.keys(lineGenerators).includes(d))
-                return lineGenerators[d](delaysPerDate.filter(item => item.region === d));
+    svg.selectAll(".line")
+      .data(['northeast','west','midwest','south'])
+      .transition()
+      .duration(1000)
+      .attr("d", d => {
+        if(Object.keys(lineGenerators).includes(d))
+          return lineGenerators[d](delaysPerDate.filter(item => item.region === d));
         })
-        .style("stroke", d => {
-            if(Object.keys(lineGenerators).includes(d)) 
-                return regionColors[d];
-            else return "none"
-        })
+      .style("stroke", d => {
+        if(Object.keys(lineGenerators).includes(d)) 
+          return regionColors[d];
+        else return "none"
+      })
 
-    // Update the x-axis with the new data points, formatting the labels for budget in millions
-    svg
-      .select(".axisXDays")
-      .transition()
-      .duration(500)
-      .call(d3.axisBottom(xScale).ticks(d3.timeDay.every(2)).tickFormat(d3.timeFormat("%b %d")));
-    
-    svg
-      .select(".axisXDays")
-      .transition()
-      .duration(500);
+		svg.select(".y-axis")
+			.transition()
+			.duration(1000)
+			.call(d3
+				.axisLeft(yScale)
+				.tickFormat(d => (d > 1000) ? (d / 1000) + "k" : d)
+			);
   
     // Add tooltips to all circles with the movie title as the content
     // svg
@@ -291,110 +279,107 @@ function updateStream(delays, temp) {
     //   .append("title")
     //   .text((d) => d.title);
 }
-  function updateChordDiagram(delays, temp) {
-    // console.log('Inside updateChordDiagram:', delays, temp);
 
-    const svg = d3.select("#chordDiagram").select("svg").select("g");
-    svg.selectAll("*").remove(); 
-
+function updateChordDiagram(delays, temp) {
+	// console.log('Inside updateChordDiagram:', delays, temp);
+	const svg = d3.select("#chordDiagram").select("svg").select("g");
+	svg.selectAll("*").remove(); 
     const outerRadius = width * 0.38 - 40;
     const innerRadius = outerRadius - 20;
 
-    const regions = ["west", "south", "midwest", "northeast"];
-
+	const regions = ["west", "south", "midwest", "northeast"];
 
 	const delaysMatrix = regions.map((sourceRegion) =>
-		regions.map((targetRegion) => {
-			const sum = d3.sum(delays.filter(d => stateToRegion[d.ORIGIN_STATE] === sourceRegion && stateToRegion[d.DEST_STATE] === targetRegion), d => d.DEP_DELAY);
-			return sourceRegion === targetRegion ? 0 : sum;
-		})
+		regions.map((targetRegion) =>
+			d3.sum(delays.filter(d => stateToRegion[d.ORIGIN_STATE] === sourceRegion && stateToRegion[d.DEST_STATE] === targetRegion), d => d.DEP_DELAY)
+		)
 	);
 
-    const chord = d3.chord()
-        .padAngle(0.05)
-        .sortSubgroups(d3.descending);
+	const chord = d3.chord()
+		.padAngle(0.05)
+		.sortSubgroups(d3.descending);
 
-    const arc = d3.arc()
-        .innerRadius(innerRadius)
-        .outerRadius(outerRadius);
+	const arc = d3.arc()
+		.innerRadius(innerRadius)
+		.outerRadius(outerRadius);
 
-    const ribbon = d3.ribbon()
-        .radius(innerRadius);
+	const ribbon = d3.ribbon()
+		.radius(innerRadius);
 
-    const chords = chord(delaysMatrix);
+	const chords = chord(delaysMatrix);
 
-    const grads = svg.append("defs").selectAll("linearGradient")
-        .data(chords)
-        .enter().append("linearGradient")
-        .attr("id", function (d) {
-            return `chordGradient-${d.source.index}-${d.target.index}`;
-        })
-        .attr("gradientUnits", "userSpaceOnUse")
-        .attr("x1", function (d) {
-            return innerRadius * Math.cos((d.source.endAngle - d.source.startAngle) / 2 + d.source.startAngle - Math.PI / 2);
-        })
-        .attr("y1", function (d) {
-            return innerRadius * Math.sin((d.source.endAngle - d.source.startAngle) / 2 + d.source.startAngle - Math.PI / 2);
-        })
-        .attr("x2", function (d) {
-            return innerRadius * Math.cos((d.target.endAngle - d.target.startAngle) / 2 + d.target.startAngle - Math.PI / 2);
-        })
-        .attr("y2", function (d) {
-            return innerRadius * Math.sin((d.target.endAngle - d.target.startAngle) / 2 + d.target.startAngle - Math.PI / 2);
-        });
+	const grads = svg.append("defs").selectAll("linearGradient")
+		.data(chords)
+		.enter().append("linearGradient")
+		.attr("id", function (d) {
+			return `chordGradient-${d.source.index}-${d.target.index}`;
+		})
+		.attr("gradientUnits", "userSpaceOnUse")
+		.attr("x1", function (d) {
+			return innerRadius * Math.cos((d.source.endAngle - d.source.startAngle) / 2 + d.source.startAngle - Math.PI / 2);
+		})
+		.attr("y1", function (d) {
+			return innerRadius * Math.sin((d.source.endAngle - d.source.startAngle) / 2 + d.source.startAngle - Math.PI / 2);
+		})
+		.attr("x2", function (d) {
+			return innerRadius * Math.cos((d.target.endAngle - d.target.startAngle) / 2 + d.target.startAngle - Math.PI / 2);
+		})
+		.attr("y2", function (d) {
+			return innerRadius * Math.sin((d.target.endAngle - d.target.startAngle) / 2 + d.target.startAngle - Math.PI / 2);
+		});
 
-    grads.append("stop")
-        .attr("offset", "0%")
-        .attr("stop-color", function (d) {
-            return regionColors[regions[d.source.index]];
-        });
+	grads.append("stop")
+		.attr("offset", "0%")
+		.attr("stop-color", function (d) {
+				return regionColors[regions[d.source.index]];
+		});
 
-    grads.append("stop")
-        .attr("offset", "100%")
-        .attr("stop-color", function (d) {
-            return regionColors[regions[d.target.index]];
-        });
+	grads.append("stop")
+		.attr("offset", "100%")
+		.attr("stop-color", function (d) {
+				return regionColors[regions[d.target.index]];
+		});
 
-    const groups = svg.selectAll("g.group")
-        .data(chords.groups)
-        .enter()
-        .append("g")
-        .attr("class", "group");
+	const groups = svg.selectAll("g.group")
+		.data(chords.groups)
+		.enter()
+		.append("g")
+		.attr("class", "group");
 
-    groups.append("path")
-        .style("fill", (d) => regionColors[regions[d.index]])
-        .style("stroke", (d) => regionColors[regions[d.index]])
-        .attr("d", arc)
-        .style("cursor", "pointer")
-        .on("mouseover", handleMouseOver)
-        .on("mouseout", hideTooltip);
+	groups.append("path")
+		.style("fill", (d) => regionColors[regions[d.index]])
+		.style("stroke", (d) => regionColors[regions[d.index]])
+		.attr("d", arc)
+		.style("cursor", "pointer")
+		.on("mouseover", handleMouseOver)
+		.on("mouseout", hideTooltip);
 
-    groups.append("text")
-        .attr("x", 6)
-        .attr("dy", 15)
-        .append("textPath")
-        .attr("xlink:href", (d) => `#group-arc-${d.index}`)
-        .text((d) => regions[d.index]);
+	groups.append("text")
+		.attr("x", 6)
+		.attr("dy", 15)
+		.append("textPath")
+		.attr("xlink:href", (d) => `#group-arc-${d.index}`)
+		.text((d) => regions[d.index]);
 
-    function handleMouseOver(event, d) {
-        const tooltip = d3.select("#tooltip");
-        tooltip.transition().duration(200).style("opacity", 0.9);
-        tooltip.html(`Region: ${regions[d.index]}`);
-    }
+	function handleMouseOver(event, d) {
+		const tooltip = d3.select("#tooltip");
+		tooltip.transition().duration(200).style("opacity", 0.9);
+		tooltip.html(`Region: ${regions[d.index]}`);
+	}
 
-    const chordPaths = svg.selectAll("path.chord")
-        .data(chords)
-        .enter().append("path")
-        .attr("class", "chord")
-        .style("fill", function (d) {
-            return `url(#chordGradient-${d.source.index}-${d.target.index})`;
-        })
-        .style("opacity", 0.8)
-        .on("mouseover", (event, d) => {
-            showTooltip(event, d);
-        })
-        .on("mouseout", hideTooltip)
-        .attr("d", ribbon);
+	const chordPaths = svg.selectAll("path.chord")
+		.data(chords)
+		.enter().append("path")
+		.attr("class", "chord")
+		.style("fill", function (d) {
+			return `url(#chordGradient-${d.source.index}-${d.target.index})`;
+		})
+		.style("opacity", 0.8)
+		.on("mouseover", (event, d) => {
+			showTooltip(event, d);
+		})
+		.on("mouseout", hideTooltip)
+		.attr("d", ribbon);
 		
 }
 

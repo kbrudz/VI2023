@@ -47,7 +47,7 @@ function updateIdioms(data) {
     if (data != "all"){
         updateParallel(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === data));
         updateStream(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === data), globalTemp.filter((d) => stateToRegion[d.iso_region] === data));
-        updateChordDiagram(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === data));
+        updateChordDiagram(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === data || stateToRegion[d.DEST_STATE] === data));
     }else{
         updateParallel(globalDelays);
         updateStream(globalDelays, globalTemp);
