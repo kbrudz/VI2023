@@ -228,9 +228,7 @@ function updateStream(delays, temp) {
     );
 		
 	const temperatureValues = d3.map(avgTemp, d => d.avgTempC);
-	console.log(`min tmp: ${Math.min(...temperatureValues)} max tmp: ${Math.max(...temperatureValues)}`);
-
-
+	// console.log(`min tmp: ${Math.min(...temperatureValues)} max tmp: ${Math.max(...temperatureValues)}`);
 		
   const days = d3.map(avgTemp, d => new Date(d.date).getDate());
 	const dates = d3.map(avgTemp, d => d.date);
@@ -351,6 +349,7 @@ function updateChordDiagram(delays, temp) {
 		.style("stroke", (d) => regionColors[regions[d.index]])
 		.attr("d", arc)
 		.style("cursor", "pointer")
+		.on("click", handleClick)
 		.on("mouseover", handleMouseOver)
 		.on("mouseout", hideTooltip);
 
@@ -360,6 +359,10 @@ function updateChordDiagram(delays, temp) {
 		.append("textPath")
 		.attr("xlink:href", (d) => `#group-arc-${d.index}`)
 		.text((d) => regions[d.index]);
+
+	function handleClick(event, d) {
+		updateIdioms(regions[d.index]);
+	}
 
 	function handleMouseOver(event, d) {
 		const tooltip = d3.select("#tooltip");

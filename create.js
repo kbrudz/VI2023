@@ -29,7 +29,7 @@ const regionColors = {"west":"#F5C225", "south":"#6b17fc", "midwest":"#75C700", 
 
 var tempColorScale = d3.scaleLinear()
 		// .range(["red", "#ffefef", "blue"])
-		.range(["#8B0000", "#ffefef", "#00008B"])
+		.range(["#8B0000", "#ffffff", "#00008B"])
 		.domain([-10,0,20]);
 		
 // Function to create a bar chart
@@ -133,7 +133,7 @@ function createStreamGraph(delays, temp) {
 
 	// console.log("temperatureValues: ",temperatureValues)
 
-	console.log(`min tmp: ${Math.min(...temperatureValues)} max tmp: ${Math.max(...temperatureValues)}`);
+	// console.log(`min tmp: ${Math.min(...temperatureValues)} max tmp: ${Math.max(...temperatureValues)}`);
 
 	// Build X scales and axis:
 	const x = d3.scaleBand()
@@ -519,6 +519,7 @@ function createChordDiagram(delays, temp) {
         .style("stroke", (d) => regionColors[regions[d.index]])
         .attr("d", arc)
         .style("cursor", "pointer")
+				.on("click", handleClick)
         .on("mouseover", handleMouseOver)
         .on("mouseout", hideTooltip);
 
@@ -529,6 +530,10 @@ function createChordDiagram(delays, temp) {
         .append("textPath")
         .attr("xlink:href", (d) => `#group-arc-${d.index}`)
         .text((d) => regions[d.index]);
+
+	function handleClick(event, d) {
+		updateIdioms(regions[d.index]);
+	}
 
 	function handleMouseOver(event, d) {
 			const tooltip = d3.select("#tooltip");
