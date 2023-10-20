@@ -558,7 +558,7 @@ function createLegend(){
 	var legend = [[-10,1],[0,1],[20,1]];
 	const widthLegend = 20;
 	const heightLegend = 100;
-	let svgLegend = d3.select("#legend")
+	let svgLegend = d3.select("#streamGraph")
 		.append("svg")
 		.attr("width", widthLegend + margin.left )
 		.attr("height", height + margin.top + margin.bottom)
@@ -568,7 +568,7 @@ function createLegend(){
 		.range([ 0, heightLegend ])
 		.domain(legend.map(d => d[0]))
 		.padding(0.2);
-	let tickLabels = ["-10ºC", "0ºC", "20ºC"];
+	let tickLabels = ["20ºC", "0ºC", "-10ºC"];
 	svgLegend.append("g")
 		.attr("transform", "translate(" + 0 + ",0)")
 		.call(d3.axisBottom(xLegend).ticks(3).tickFormat((d,i) => tickLabels[i]))
