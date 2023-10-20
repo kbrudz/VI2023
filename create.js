@@ -111,12 +111,12 @@ function createStreamGraph(delays, temp) {
 
 	// Build X scales and axis:
 	let x = d3.scaleBand()
-		.range([ -10, width + 10 ])
+		.range([ 0, width ])
 		.domain(dates)
 		.padding(0);
 	const bw = x.bandwidth();
-	x.range([-bw/2, width + bw/2]);
-	
+	x.range([0, width + bw]);
+
 	const xDays = d3.scaleBand()
 		.range([ 1, width ])
 		.domain(days)
@@ -138,9 +138,9 @@ function createStreamGraph(delays, temp) {
 	  .attr("class", "rect")
     .attr("fill", (d) => tempColorScale(d.avgTempC))
 	//   .attr("opacity", 0.8)
-    .attr("x", function(d) {return x(d.date) })
+    .attr("x", (d) => x(d.date) - ((d.date === "2018-12-01") ? 0 : x.bandwidth()/2))
     //.attr("y", function(d) { return y(d.avgTempC) })
-    .attr("width", x.bandwidth() )
+    .attr("width", (d) => (d.date === "2018-12-01" || d.date === "2018-12-31") ? x.bandwidth()/2 : x.bandwidth())
     .attr("height", height )
 
 	function calculateDelaySum(regionCode) {

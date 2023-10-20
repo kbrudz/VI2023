@@ -239,7 +239,7 @@ function updateStream(delays, temp) {
 		.domain(dates)
 		.padding(0);
 	const bw = x.bandwidth();
-	x.range([-bw/2, width + bw/2]);
+	x.range([0, width + bw]);
   
     // Select all existing circles and bind the data to them
 	svg.selectAll(".rect")
@@ -247,7 +247,7 @@ function updateStream(delays, temp) {
 		.transition()
 		.duration(1000)
 		.attr("fill", (d) => tempColorScale(d.avgTempC))
-		.attr("x", function(d) {return x(d.date) });
+		.attr("x", (d) => x(d.date) - ((d.date === "2018-12-01") ? 0 : x.bandwidth()/2));
 
     svg.selectAll(".line")
       .data(['northeast','west','midwest','south'])
