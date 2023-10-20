@@ -234,10 +234,12 @@ function updateStream(delays, temp) {
 	const dates = d3.map(avgTemp, d => d.date);
 
 	// Build X scales and axis:
-	const x = d3.scaleBand()
-		.range([ 1, width + 1 ])
+	let x = d3.scaleBand()
+		.range([ -10, width + 10 ])
 		.domain(dates)
 		.padding(0);
+	const bw = x.bandwidth();
+	x.range([-bw/2, width + bw/2]);
   
     // Select all existing circles and bind the data to them
 	svg.selectAll(".rect")

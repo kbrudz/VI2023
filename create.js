@@ -99,32 +99,6 @@ function createStreamGraph(delays, temp) {
 				.y(d => yScale(d.delay));
 		}
 	});
-	
-
-	svg.append("g")
-		.attr("class", "x-axis")
-		.attr("transform", `translate(0, ${height})`)
-		.call(d3
-			.axisBottom(xScale)
-			.ticks(d3.timeDay.every(2))
-			.tickFormat(d3.timeFormat("%b %d"))
-		);
-
-	svg.append("g")
-		.attr("class", "y-axis")
-		.call(d3
-			.axisLeft(yScale)
-			.tickFormat(d => (d > 1000) ? (d / 1000) + "k" : d)
-		);
-
-	svg
-    .append("text")
-    .attr("class", "y-axis-label")
-    .attr("x", -height/2)
-    .attr("y", -margin.left + 15)
-    .style("text-anchor", "middle")
-    .attr("transform", "rotate(-90)")
-    .text("Average Delay (minutes)");
 
 	//console.log("temp", temp);
 	const temperatureValues = d3.map(temperature, d => d.avgTempC);
@@ -136,22 +110,26 @@ function createStreamGraph(delays, temp) {
 	// console.log(`min tmp: ${Math.min(...temperatureValues)} max tmp: ${Math.max(...temperatureValues)}`);
 
 	// Build X scales and axis:
-	const x = d3.scaleBand()
-		.range([ 1, width + 1 ])
+	let x = d3.scaleBand()
+		.range([ -10, width + 10 ])
 		.domain(dates)
 		.padding(0);
+	const bw = x.bandwidth();
+	x.range([-bw/2, width + bw/2]);
 	
 	const xDays = d3.scaleBand()
-		.range([ 1, width + 1 ])
+		.range([ 1, width ])
 		.domain(days)
 		.padding(0);
 
-	svg.append("g")
-		.attr("class", "axisXDays")
-		.attr("transform", "translate(0," + height + ")")
-	// .call(d3.axisBottom(xDays));
+	// svg.append("g")
+	//	.attr("class", "axisXDays")
+	// 	.attr("transform", "translate(0," + height + ")")
+	//  .call(d3.axisBottom(xDays));
 	// console.log("x", [d3.min(temperature, d => d.avgTempC),d3.max(temperature, d => d.avgTempC)]);
 	// console.log("temp ",temp,temp.forEach(d => d.ORIGIN_AIRPORT));
+
+	
 
 	svg.selectAll()
       .data(temperature, function(d) {return d.date;})
@@ -188,6 +166,31 @@ function createStreamGraph(delays, temp) {
 		})
 		.style("stroke-width", 5)
 		.style("fill", "none");
+
+	svg.append("g")
+		.attr("class", "x-axis")
+		.attr("transform", `translate(0, ${height})`)
+		.call(d3
+			.axisBottom(xScale)
+			.ticks(d3.timeDay.every(2))
+			.tickFormat(d3.timeFormat("%b %d"))
+		);
+
+	svg.append("g")
+		.attr("class", "y-axis")
+		.call(d3
+			.axisLeft(yScale)
+			.tickFormat(d => (d > 1000) ? (d / 1000) + "k" : d)
+		);
+
+	svg
+    .append("text")
+    .attr("class", "y-axis-label")
+    .attr("x", -height/2)
+    .attr("y", -margin.left + 15)
+    .style("text-anchor", "middle")
+    .attr("transform", "rotate(-90)")
+    .text("Average Delay (minutes)");
 
 	createLegend();
 
