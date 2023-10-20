@@ -2,8 +2,8 @@ function showTooltip(event, d){
     d3.select('#tooltip')
         .transition()
         .style("opacity", 1)
-        .style("left", event.pageX + "px")
-        .style("top", event.pageY + "px");
+        .style("left", (event.pageX+1) + "px")
+        .style("top", (event.pageY+1) + "px");
 
 	const regions = ["west", "south", "midwest", "northeast"];
 
