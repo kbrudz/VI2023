@@ -36,7 +36,7 @@ var tempColorScale = d3.scaleLinear()
 function createStreamGraph(delays, temp) {
 	//set the dimensions and margins of the graph
 	//var margin = {top: 30, right: 10, bottom: 10, left: 10}
-	const margin = { top: 20, right: 20, bottom: 20, left: 30 },
+	const margin = { top: 20, right: 15, bottom: 20, left: 45 },
 		width = 600 - margin.left - margin.right,
 		height = 400 - margin.top - margin.bottom;
 
@@ -48,7 +48,7 @@ function createStreamGraph(delays, temp) {
 
 	const delaysPerDate = d3.rollups(
 		delaysFiltered, 
-		v => d3.sum(v, d => Math.max(d.DEP_DELAY, 0)), 
+		v => d3.mean(v, d => Math.max(d.DEP_DELAY, 0)), 
 		d => d.FL_DATE,  
 		d => stateToRegion[d.ORIGIN_STATE]
 	).flatMap(
@@ -81,7 +81,7 @@ function createStreamGraph(delays, temp) {
 		// const minDelay = d3.min(delaysPerDate, d => d.delays);
 		// const maxDelay = d3.max(delaysPerDate, d => d.delay);
 		
-		const yScale = d3.scaleLinear()
+	const yScale = d3.scaleLinear()
 		.domain([0, d3.max(delaysPerDate, d => d.delay)])
 		.nice()
 		.range([height, 0]);
@@ -120,6 +120,15 @@ function createStreamGraph(delays, temp) {
 			.axisLeft(yScale)
 			.tickFormat(d => (d > 1000) ? (d / 1000) + "k" : d)
 		);
+
+	svg
+    .append("text")
+    .attr("class", "y-axis-label")
+    .attr("x", -height/2)
+    .attr("y", -margin.left + 15)
+    .style("text-anchor", "middle")
+    .attr("transform", "rotate(-90)")
+    .text("Average Delay (minutes)");
 
 	//console.log("temp", temp);
 	const temperatureValues = d3.map(temperature, d => d.avgTempC);
@@ -439,10 +448,9 @@ function createChordDiagram(delays, temp) {
 
     // Create a matrix of the delays between regions
     const delaysMatrix = regions.map((sourceRegion) =>
-        regions.map((targetRegion) => {
-            const sum = d3.sum(delays.filter(d => stateToRegion[d.ORIGIN_STATE] === sourceRegion && stateToRegion[d.DEST_STATE] === targetRegion), d => d.DEP_DELAY);
-            return sourceRegion === targetRegion ? 0 : sum; 
-        })
+			regions.map((targetRegion) =>
+				d3.sum(delays.filter(d => stateToRegion[d.ORIGIN_STATE] === sourceRegion && stateToRegion[d.DEST_STATE] === targetRegion), d => d.DEP_DELAY)
+			)
     );
 
     const chord = d3.chord()
