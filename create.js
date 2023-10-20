@@ -188,12 +188,8 @@ function createStreamGraph(delays, temp) {
 		})
 		.style("stroke-width", 5)
 		.style("fill", "none");
-	let svgLegend = d3.select("#legend")
-		.append("svg")
-		.attr("width", 40)
-		.attr("height", 200)
-		.append("g")
-		.attr("transform", "translate(" + (width+10) + "," + height/4 + ")");
+
+	createLegend();
 
 	// const tempsForLegend = [];
 	// for (var i = -10; i<= 20; i++)
@@ -550,3 +546,42 @@ function createChordDiagram(delays, temp) {
         .attr("d", ribbon);
 }
 
+function createLegend(){
+	var legend = [[-10,1],[0,1],[20,1]];
+	const widthLegend = 20;
+	const heightLegend = 100;
+	let svgLegend = d3.select("#legend")
+		.append("svg")
+		.attr("width", widthLegend + margin.left )
+		.attr("height", height + margin.top + margin.bottom)
+		.append("g")
+		.attr("transform", "translate(" + widthLegend + "," + margin.top+ ") rotate(90)");
+	var xLegend = d3.scaleBand()
+		.range([ 0, heightLegend ])
+		.domain(legend.map(d => d[0]))
+		.padding(0.2);
+	let tickLabels = ["-10ºC", "0ºC", "20ºC"];
+	svgLegend.append("g")
+		.attr("transform", "translate(" + 0 + ",0)")
+		.call(d3.axisBottom(xLegend).ticks(3).tickFormat((d,i) => tickLabels[i]))
+		.attr('stroke-width', 0)
+		.selectAll("text")
+		.attr("transform", "translate(-12,-5) rotate(-90)")
+		.style("text-anchor", "start");
+	// Add Y axis
+	var yLegend = d3.scaleLinear()
+		.domain([0, 1])
+		.range([ widthLegend, 0]);
+	// Bars
+	svgLegend.selectAll("mybar")
+		.data(legend)
+		.enter()
+		.append("rect")
+		.attr("x", function(d) { return xLegend(d[0]); })
+		.attr("y", function(d) { return yLegend(d[1]); })
+		.attr("width", xLegend.bandwidth())
+		.attr("height", function(d) {console.log(tempColorScale(d[0]),d3.rgb(tempColorScale(d[0])).darker(1)); return widthLegend - yLegend(d[1]); })
+		.attr("fill", d => tempColorScale(d[0]))
+		.attr('stroke-width', 1)
+		.attr('stroke', d => d3.rgb(tempColorScale(d[0])).darker(1))
+}
