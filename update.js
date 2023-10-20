@@ -1,8 +1,7 @@
 // Function to update the bar chart with new data
 function updateParallel(data) {
-	const margin = {top: 30, right: 30, bottom: 10, left: 0},
-    width = 1800 - margin.left - margin.right,
-    height = 380 - margin.top - margin.bottom;
+    // width = 1200 - margin.left - margin.right;
+	const width = widthParallel;
     // Select the SVG element of the bar chart
     const svg = d3.select("#parallelCoords").select("svg").select("g");
     // Group the data by ORIGIN_AIRPORT and calculate the sums and means
@@ -186,9 +185,6 @@ function updateStream(delays, temp) {
     const delaysFiltered = delays.filter(
 		d => (d.DEP_DELAY && d.FL_DATE && d.ORIGIN_STATE && stateToRegion[d.ORIGIN_STATE])
 	);
-	const margin = { top: 20, right: 20, bottom: 20, left: 20 },
-    width = 600 - margin.left - margin.right,
-    height = 400 - margin.top - margin.bottom;
 
     // Select the SVG element of the graph
     const svg = d3.select("#streamGraph").select("svg").select("g");
@@ -229,6 +225,10 @@ function updateStream(delays, temp) {
 	).flatMap(
 		([k1, v1]) => ({date: k1, avgTempC: v1.avgTempC, avgTempF: v1.avgTempF})
     );
+		
+	const temperatureValues = d3.map(avgTemp, d => d.avgTempC);
+	console.log(`min tmp: ${Math.min(...temperatureValues)} max tmp: ${Math.max(...temperatureValues)}`);
+
 
     const days = d3.map(avgTemp, d => new Date(d.date).getDate());
 	const dates = d3.map(avgTemp, d => d.date);
@@ -295,13 +295,7 @@ function updateStream(delays, temp) {
     const svg = d3.select("#chordDiagram").select("svg").select("g");
     svg.selectAll("*").remove(); 
 
-    const svgWidth = 650;
-    const svgHeight = 550;
-    const margin = { top: 0, right: 10, bottom: 10, left: 0 };
-    const width = svgWidth - margin.left - margin.right;
-    const height = svgHeight - margin.top - margin.bottom;
-
-    const outerRadius = svgWidth * 0.38 - 40;
+    const outerRadius = width * 0.38 - 40;
     const innerRadius = outerRadius - 20;
 
     const regions = ["west", "south", "midwest", "northeast"];

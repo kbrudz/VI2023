@@ -31,9 +31,10 @@ const regionColors = {"west":"#F5C225", "south":"#6b17fc", "midwest":"#75C700", 
 // 		.range(["#8B0000", "red", "blue","#00008B"])
 // 		.domain([-30, -10, 	10, 30]);
 var tempColorScale = d3.scaleLinear()
-	.range(["red", "#ffefef", "blue"])
-	// .range(["#8B0000", "#ffefef", "#00008B"])
-	.domain([-30,0,30]);
+		// .range(["red", "#ffefef", "blue"])
+		.range(["#8B0000", "#ffefef", "#00008B"])
+		.domain([-10,0,20]);
+		
 // Function to create a bar chart
 function createStreamGraph(delays, temp) {
     // Select the #streamGraph element and append an SVG to it
@@ -60,21 +61,14 @@ function createStreamGraph(delays, temp) {
 	).flatMap(
 		([k1, v1]) => ({date: k1, avgTempC: v1.avgTempC, avgTempF: v1.avgTempF}));
 	//console.log("temp: ",temperature);
-
-    //set the dimensions and margins of the graph
-	//var margin = {top: 30, right: 10, bottom: 10, left: 10}
-    const margin = { top: 20, right: 20, bottom: 20, left: 20 },
-    width = 600 - margin.left - margin.right,
-    height = 400 - margin.top - margin.bottom;
-
+	
 	// append the svg object to the body of the page
 	let svg = d3.select("#streamGraph")
 		.append("svg")
-		.attr("width", width + margin.left + margin.right)
+		.attr("width", 700 )
 		.attr("height", height + margin.top + margin.bottom)
 		.append("g")
-		.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-		.attr('viewBox', '0 0 600 400');
+		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 	const xScale = d3.scaleTime()
 		.domain([new Date("2018-12-01"), new Date("2018-12-31")])
@@ -118,7 +112,7 @@ function createStreamGraph(delays, temp) {
 
 	// console.log("temperatureValues: ",temperatureValues)
 
-	// console.log(`min tmp: ${Math.min(...temperatureValues)} max tmp: ${Math.max(...temperatureValues)}`);
+	console.log(`min tmp: ${Math.min(...temperatureValues)} max tmp: ${Math.max(...temperatureValues)}`);
 
 	// Build X scales and axis:
 	const x = d3.scaleBand()
@@ -161,6 +155,36 @@ function createStreamGraph(delays, temp) {
 		})
 		.style("stroke-width", 5)
 		.style("fill", "none");
+	let svgLegend = d3.select("#legend")
+		.append("svg")
+		.attr("width", 40)
+		.attr("height", 200)
+		.append("g")
+		.attr("transform", "translate(" + (width+10) + "," + height/4 + ")");
+
+	// const tempsForLegend = [];
+	// for (var i = -10; i<= 20; i++)
+	// 	tempsForLegend.push(i);
+	// var rectHeight = 40;
+	// var legend = svg.append("rect")
+	// 	.attr("width", 20)
+	// 	.attr("height", rectHeight)
+	// 	.attr("transform", "translate(" + (width+10) + "," + height/4 + ")")
+	// 	.style("fill", d => tempColorScale(-10));
+	// legend.append("text")
+	// 	.attr("x", 25)
+	// 	.attr("y", height/4)
+	// 	.text("20ºC");
+	// svg.append("rect")
+	// 	.attr("width", 20)
+	// 	.attr("height", rectHeight)
+	// 	.attr("transform", "translate(" + (width+10) + "," + (height/4+40+5) + ")")
+	// 	.style("fill", d => tempColorScale(0))
+	// svg.append("rect")
+	// 	.attr("width", 20)
+	// 	.attr("height", rectHeight)
+	// 	.attr("transform", "translate(" + (width+10) + "," + (height/4+90) + ")")
+	// 	.style("fill", d => tempColorScale(20));
 }
 
 function createParallelCoords(delays, temp) {
@@ -172,11 +196,8 @@ function createParallelCoords(delays, temp) {
 	// DONE fix grid layout based on lab4
 
       // set the dimensions and margins of the graph
-    const margin = {top: 30, right: 30, bottom: 10, left: 0},
-    width = 1800 - margin.left - margin.right,
-    height = 380 - margin.top - margin.bottom;
-
-    // Group the data by ORIGIN_AIRPORT and calculate the sums and means
+	const width = widthParallel;
+	  // Group the data by ORIGIN_AIRPORT and calculate the sums and means
 	const aggregatedData = d3.rollup(
 		delays,
 		group => ({
@@ -223,7 +244,7 @@ function createParallelCoords(delays, temp) {
 		.attr("width", width + margin.left + margin.right)
 		.attr("height", height + margin.top + margin.bottom)
 	  	.append("g")
-		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+		.attr("transform", "translate(" + -margin.left + "," + margin.top + ")");
 	
 	// Add grey background lines for context.
 	background = svg.append("g")
@@ -388,23 +409,16 @@ function createChordDiagram(delays, temp) {
 	// #TO DO Show % of delays when you choose a region
 	
     // console.log('Inside createChordDiagram:', delays, temp);
-
-    const svgWidth = 650;
-    const svgHeight = 550;
-    const margin = { top: 0, right: 10, bottom: 10, left: 0 };
-    const width = svgWidth - margin.left - margin.right;
-    const height = svgHeight - margin.top - margin.bottom;
-
-    const outerRadius = svgWidth * 0.38 - 40;
+    const outerRadius = width * 0.38 - 40;
     const innerRadius = outerRadius - 20;
 	
     const svg = d3
         .select("#chordDiagram")
         .append("svg")
-        .attr("width", svgWidth)
-        .attr("height", svgHeight)
+        .attr("width", width)
+        .attr("height", height)
         .append("g")
-        .attr("transform", `translate(${width / 2},${(height + width) / 5.5})`);
+        .attr("transform", `translate(${width / 2},${(height) / 2})`);
 
 
     const regions = ["west", "south", "midwest", "northeast"]; // regions
