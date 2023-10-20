@@ -44,6 +44,7 @@ function startDashboard() {
 // // This function updates the visualizations based on the selected data type.
 function updateIdioms(data) {
     // Use a switch statement to check which data type is selected.
+    console.log(data);
     if (data != "all"){
         updateParallel(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === data));
         updateStream(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === data), globalTemp.filter((d) => stateToRegion[d.iso_region] === data));

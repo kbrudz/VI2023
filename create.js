@@ -29,7 +29,7 @@ const regionColors = {"west":"#F5C225", "south":"#6b17fc", "midwest":"#75C700", 
 
 var tempColorScale = d3.scaleLinear()
 		// .range(["red", "#ffefef", "blue"])
-		.range(["#8B0000", "#ffffff", "#00008B"])
+		.range(["#00008B", "#ffffff", "#8B0000"])
 		.domain([-10,0,20]);
 		
 // Function to create a bar chart
@@ -122,26 +122,19 @@ function createStreamGraph(delays, temp) {
 		.domain(days)
 		.padding(0);
 
-	// svg.append("g")
-	//	.attr("class", "axisXDays")
-	// 	.attr("transform", "translate(0," + height + ")")
-	//  .call(d3.axisBottom(xDays));
-	// console.log("x", [d3.min(temperature, d => d.avgTempC),d3.max(temperature, d => d.avgTempC)]);
-	// console.log("temp ",temp,temp.forEach(d => d.ORIGIN_AIRPORT));
-
-	
-
 	svg.selectAll()
-      .data(temperature, function(d) {return d.date;})
-      .enter()
-      .append("rect")
-	  .attr("class", "rect")
-    .attr("fill", (d) => tempColorScale(d.avgTempC))
-	//   .attr("opacity", 0.8)
-    .attr("x", (d) => x(d.date) - ((d.date === "2018-12-01") ? 0 : x.bandwidth()/2))
-    //.attr("y", function(d) { return y(d.avgTempC) })
-    .attr("width", (d) => (d.date === "2018-12-01" || d.date === "2018-12-31") ? x.bandwidth()/2 : x.bandwidth())
-    .attr("height", height )
+		.data(temperature, function(d) {return d.date;})
+		.enter()
+		.append("rect")
+		.attr("class", "rect")
+		.attr("fill", (d) => tempColorScale(d.avgTempC))
+		//   .attr("opacity", 0.8)
+		.attr("x", (d) => x(d.date) - ((d.date === "2018-12-01") ? 0 : x.bandwidth()/2))
+		//.attr("y", function(d) { return y(d.avgTempC) })
+		.attr("width", (d) => (d.date === "2018-12-01" || d.date === "2018-12-31") ? x.bandwidth()/2 : x.bandwidth())
+		.attr("height", height )
+		.on("mouseover", showTooltip)
+		.on("mouseout", hideTooltip)
 
 	function calculateDelaySum(regionCode) {
 		//calculate the sum of delays for a given region
@@ -164,6 +157,8 @@ function createStreamGraph(delays, temp) {
 		.on("click", function(event, d) {
 			updateIdioms(d);
 		})
+		.on("mouseover", showTooltip)
+		.on("mouseout", hideTooltip)
 		.style("stroke-width", 5)
 		.style("fill", "none");
 
@@ -193,30 +188,6 @@ function createStreamGraph(delays, temp) {
     .text("Average Delay (minutes)");
 
 	createLegend();
-
-	// const tempsForLegend = [];
-	// for (var i = -10; i<= 20; i++)
-	// 	tempsForLegend.push(i);
-	// var rectHeight = 40;
-	// var legend = svg.append("rect")
-	// 	.attr("width", 20)
-	// 	.attr("height", rectHeight)
-	// 	.attr("transform", "translate(" + (width+10) + "," + height/4 + ")")
-	// 	.style("fill", d => tempColorScale(-10));
-	// legend.append("text")
-	// 	.attr("x", 25)
-	// 	.attr("y", height/4)
-	// 	.text("20ºC");
-	// svg.append("rect")
-	// 	.attr("width", 20)
-	// 	.attr("height", rectHeight)
-	// 	.attr("transform", "translate(" + (width+10) + "," + (height/4+40+5) + ")")
-	// 	.style("fill", d => tempColorScale(0))
-	// svg.append("rect")
-	// 	.attr("width", 20)
-	// 	.attr("height", rectHeight)
-	// 	.attr("transform", "translate(" + (width+10) + "," + (height/4+90) + ")")
-	// 	.style("fill", d => tempColorScale(20));
 }
 
 function createParallelCoords(delays, temp) {
@@ -555,10 +526,10 @@ function createChordDiagram(delays, temp) {
 }
 
 function createLegend(){
-	var legend = [[-10,1],[0,1],[20,1]];
+	var legend = [[20,1],[0,1],[-10,1]];
 	const widthLegend = 20;
 	const heightLegend = 100;
-	let svgLegend = d3.select("#legend")
+	let svgLegend = d3.select("#streamGraph")
 		.append("svg")
 		.attr("width", widthLegend + margin.left )
 		.attr("height", height + margin.top + margin.bottom)
@@ -568,7 +539,7 @@ function createLegend(){
 		.range([ 0, heightLegend ])
 		.domain(legend.map(d => d[0]))
 		.padding(0.2);
-	let tickLabels = ["-10ºC", "0ºC", "20ºC"];
+	let tickLabels = ["20ºC", "0ºC", "-10ºC"];
 	svgLegend.append("g")
 		.attr("transform", "translate(" + 0 + ",0)")
 		.call(d3.axisBottom(xLegend).ticks(3).tickFormat((d,i) => tickLabels[i]))
