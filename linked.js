@@ -6,12 +6,11 @@ function showTooltip(event, d){
         .style("top", (event.pageY+1) + "px");
 
 	const regions = ["west", "south", "midwest", "northeast"];
-
 	if(d.ORIGIN_AIRPORT != null)
 		document.getElementById("tooltip")
 			.innerHTML= "Airport: " + d.ORIGIN_AIRPORT + "<br>" +
-			"Region: " + stateToRegion[d.ORIGIN] +"<br>" +
-			"delay: " + d.ARR_DELAY_SUM;
+			"Region: " + stateToRegion[d.ORIGIN_STATE] +"<br>" +
+			"Delay: " + d.ARR_DELAY_SUM;
 	else if(d.date != null){
 		document.getElementById("tooltip")
 			.innerHTML= "Date: " + d.date + "<br>" +

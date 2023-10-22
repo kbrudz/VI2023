@@ -247,7 +247,7 @@ function createParallelCoords(delays, temp) {
 		.attr("width", width + margin.left + margin.right)
 		.attr("height", height + margin.top + margin.bottom)
 	  	.append("g")
-		.attr("transform", "translate(" + -margin.left + "," + margin.top + ")");
+		.attr("transform", "translate(" + -margin.left*3 + "," + margin.top + ")");
 	
 	// Add grey background lines for context.
 	background = svg.append("g")
