@@ -1,6 +1,6 @@
 // Declare a variable to hold the loaded JSON data.
 let globalDelays, globalTemp;
-    
+
 const globalRegions = ["west", "south", "midwest", "northeast"];
 let selectedRegions = [...globalRegions];
 
