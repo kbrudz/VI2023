@@ -71,3 +71,26 @@ function updateIdioms(data) {
     updateStream(globalDelays.filter((d) => selectedRegions.includes(stateToRegion[d.ORIGIN_STATE])), globalTemp.filter((d) => selectedRegions.includes(stateToRegion[d.iso_region])));
     updateChordDiagram(globalDelays.filter((d) => selectedRegions.includes(stateToRegion[d.ORIGIN_STATE]) || selectedRegions.includes(stateToRegion[d.DEST_STATE])));
 }
+
+function updateTempUnit(unit) {
+    const temperatureData = globalTemp;
+
+    const svg = d3.select("#streamGraph").select("svg");
+
+    const useFahrenheit = unit === "F";
+    svg.selectAll(".rect")
+        .attr("fill", (d) => {
+            if (useFahrenheit) {
+                return tempColorScale(d.avgTempF);
+            } else {
+                return tempColorScale(d.avgTempC);
+            }
+        });
+}
+
+
+
+
+
+
+
