@@ -501,8 +501,18 @@ function createChordDiagram(delays, temp) {
         .attr("xlink:href", (d) => `#group-arc-${d.index}`)
         .text((d) => regions[d.index]);
 
-	function handleClick(event, d) {
-		updateIdioms(regions[d.index]);
+		function handleClick(event, d) {
+			updateIdioms(regions[d.index]);
+			const groups = svg.selectAll("g.group");
+		
+			groups.select("path")
+				.style("stroke", (d) => regionColors[regions[d.index]])
+				.style("stroke-width", null);
+		
+			const selectedGroup = groups.filter((groupData) => groupData.index === d.index);
+			selectedGroup.select("path")
+				.style("stroke", "#fbfe88")  
+				.style("stroke-width", 3); 
 	}
 
 	function handleMouseOver(event, d) {

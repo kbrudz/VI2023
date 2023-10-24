@@ -79,7 +79,7 @@ function updateTempUnit(unit) {
     var legendC = [[20,1],[0,1],[-10,1]];
 
     const svg = d3.select("#streamGraph").select("svg");
-    const svgLegend = d3.select("#legend").select("svg");
+    const svgLegend = d3.select(".createLegend").select("svg");
     //create domain for color scale for Fahrenheit 	.range(["#00008B", "#ffffff", "#8B0000"]) .domain([15,35,55])
     const tempColorScale = d3.scaleLinear()
         .range(["#00008B", "#ffffff", "#8B0000"])
@@ -102,22 +102,6 @@ function updateTempUnit(unit) {
                 return tempColorScaleC(d.avgTempC)
             }
         });
-        svgLegend.selectAll("mybar")
-        .data(legend)
-        .enter()
-        .append("rect")
-        .attr("x", 10)
-        .attr("y", function(d,i) { return 10 + i*20})
-        .attr("width", 20)
-        .attr("height", 20)
-        .style("fill", d => {
-            if (useFahrenheit) {
-                return tempColorScaleF(d.avgTempF)
-            } else {
-                return tempColorScaleC(d.avgTempC)
-            }
-        });
-
     }
 
 
