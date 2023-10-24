@@ -14,7 +14,8 @@ function showTooltip(event, d){
 	else if(d.date != null){
 		document.getElementById("tooltip")
 			.innerHTML= "Date: " + d.date + "<br>" +
-			"Average Temperature: " + parseFloat(d.avgTempC).toFixed(1) +"ºC";
+			"Average Temperature: " + parseFloat(d.avgTempC).toFixed(1) +"ºC" +"<br>" +
+			"Average Temperature: " + parseFloat(d.avgTempF).toFixed(1) +"ºF";
 	}
     else if (regions.find(v => v == d) != null){
 		document.getElementById("tooltip")
@@ -27,3 +28,4 @@ function hideTooltip(d){
         .transition().duration(2000)
 		.style("opacity", 0)
   }
+  

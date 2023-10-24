@@ -1,6 +1,6 @@
 // Declare a variable to hold the loaded JSON data.
 let globalDelays, globalTemp;
-    
+
 const globalRegions = ["west", "south", "midwest", "northeast"];
 let selectedRegions = [...globalRegions];
 
@@ -71,3 +71,42 @@ function updateIdioms(data) {
     updateStream(globalDelays.filter((d) => selectedRegions.includes(stateToRegion[d.ORIGIN_STATE])), globalTemp.filter((d) => selectedRegions.includes(stateToRegion[d.iso_region])));
     updateChordDiagram(globalDelays.filter((d) => selectedRegions.includes(stateToRegion[d.ORIGIN_STATE]) || selectedRegions.includes(stateToRegion[d.DEST_STATE])));
 }
+
+function updateTempUnit(unit) {
+    const temperatureData = globalTemp;
+    var legend = [[20,1],[0,1],[-10,1]];
+    var legendF = [[55,1],[35,1],[15,1]];
+    var legendC = [[20,1],[0,1],[-10,1]];
+
+    const svg = d3.select("#streamGraph").select("svg");
+    const svgLegend = d3.select(".createLegend").select("svg");
+    //create domain for color scale for Fahrenheit 	.range(["#00008B", "#ffffff", "#8B0000"]) .domain([15,35,55])
+    const tempColorScale = d3.scaleLinear()
+        .range(["#00008B", "#ffffff", "#8B0000"])
+        .domain([-10,0,20]);
+    //create domain for color scale for Celsius
+    const tempColorScaleC = d3.scaleLinear()
+        .range(["#00008B", "#ffffff", "#8B0000"])
+        .domain([-10,0,20]);
+    //create domain for color scale for Fahrenheit
+    const tempColorScaleF = d3.scaleLinear()
+        .range(["#00008B", "#ffffff", "#8B0000"])
+        .domain([15,35,68]);
+
+    const useFahrenheit = unit === "F";
+    svg.selectAll(".rect")
+        .attr("fill", (d) => {
+            if (useFahrenheit) {
+                return tempColorScaleF(d.avgTempF)
+            } else {
+                return tempColorScaleC(d.avgTempC)
+            }
+        });
+    }
+
+
+
+
+
+
+
