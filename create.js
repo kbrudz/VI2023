@@ -65,7 +65,7 @@ function createStreamGraph(delays, temp) {
 	// append the svg object to the body of the page
 	let svg = d3.select("#streamGraph")
 		.append("svg")
-		.attr("width", width + margin.left + margin.right) 
+		.attr("width", width + margin.left + margin.right + 100) 
 		.attr("height", height + margin.top + margin.bottom)
 		.append("g")
 		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -144,16 +144,16 @@ function createStreamGraph(delays, temp) {
 	}
 	
 	const lines = svg.selectAll(".line")
-    .data(Object.keys(lineGenerators))
-    .enter()
-    .append("path")
-    .attr("class", "line")
-    .attr("d", d => lineGenerators[d](delaysPerDate.filter(item => item.region === d)))
-    .style("stroke", d => regionColors[d])
-    .style("stroke-width", 5)
-    .style("fill", "none")
-    .style("cursor", "pointer")
-    .style("pointer-events", "visible")
+		.data(Object.keys(lineGenerators))
+		.enter()
+		.append("path")
+		.attr("class", "line")
+		.attr("d", d => lineGenerators[d](delaysPerDate.filter(item => item.region === d)))
+		.style("stroke", d => regionColors[d])
+		.style("stroke-width", 5)
+		.style("fill", "none")
+		.style("cursor", "pointer")
+		.style("pointer-events", "visible")
 		.on("click", function(event, d) {
 			updateIdioms(d);
 		})
@@ -204,10 +204,10 @@ function createParallelCoords(delays, temp) {
 	const aggregatedData = d3.rollup(
 		delays,
 		group => ({
-			DEP_DELAY_SUM: d3.sum(group, d => d.DEP_DELAY),
-			ARR_DELAY_SUM: d3.sum(group, d => d.ARR_DELAY),
-			CANCELLED_MEAN: d3.mean(group, d => d.CANCELLED),
-			DIVERTED_MEAN: d3.mean(group, d => d.DIVERTED),
+			AvgDepartureDelayMinutes: d3.mean(group, d => d.DEP_DELAY),
+			AvgArrivalDelayMinutes: d3.mean(group, d => d.ARR_DELAY),
+			CancelledFlights: d3.mean(group, d => d.CANCELLED),
+			DivertedFlights: d3.mean(group, d => d.DIVERTED),
 			ORIGIN_TYPE: group[0].ORIGIN_TYPE, // Assuming it's the same for all entries of the same airport
 			ORIGIN_STATE: group[0].ORIGIN_STATE, // Assuming it's the same for all entries of the same airport
 			ORIGIN: group[0].ORIGIN, // Assuming it's the same for all entries of the same airport
@@ -221,16 +221,20 @@ function createParallelCoords(delays, temp) {
 	// console.log(formattedData);
 
 	// Define your dimensions
-	const dimensions = ["DEP_DELAY_SUM", "ARR_DELAY_SUM", "CANCELLED_MEAN", "DIVERTED_MEAN", "AIRPORT_ELEVATION"];
+	const dimensions = ["AvgDepartureDelayMinutes", "AvgArrivalDelayMinutes", "CancelledFlights", "DivertedFlights", "AIRPORT_ELEVATION"];
 	origDimensions = dimensions.slice(0);
 	const yParallel = {};
 	dimensions.forEach(dim => {
 		yParallel[dim] = d3.scaleLinear()
 			.domain([d3.max(d3.extent(formattedData, d => d[dim])), d3.min(d3.extent(formattedData, d => d[dim]))])
 			.range([0, height]);
-		if (dim == "CANCELLED_MEAN" || dim == "DIVERTED_MEAN")
+		if (dim == "DivertedFlights")
 		yParallel[dim] = d3.scaleLinear()
-			.domain([1,0])
+			.domain([0.1,0])
+			.range([0, height]);
+		if (dim == "CancelledFlights")
+		yParallel[dim] = d3.scaleLinear()
+			.domain([0.03,0])
 			.range([0, height]);
 	});
 
@@ -316,8 +320,10 @@ function createParallelCoords(delays, temp) {
 		g.append("g")
 			.attr("class", "axis")
 			.each(function(d) {  
-				if (d == "CANCELLED_MEAN" || d == "DIVERTED_MEAN")
-					d3.select(this).call(d3.axisLeft(yParallel[d]));
+				if (d == "CancelledFlights")
+					d3.select(this).call(d3.axisLeft(yParallel[d]).ticks(10).tickFormat(d3.format(".1%")));
+				else if (d == "DivertedFlights")
+					d3.select(this).call(d3.axisLeft(yParallel[d]).tickFormat(d3.format(".0%")));
 				else {d3.select(this).call(d3.axisLeft(yParallel[d]).tickFormat(d3.format(".2s")));}
 			})
 			//text does not show up because previous line breaks somehow
@@ -389,6 +395,7 @@ function createParallelCoords(delays, temp) {
 	function brushing(event) {
 		for(var i=0;i<dimensions.length;++i){
 			if(event.target==yParallel[dimensions[i]].brush) {
+				console.log("yPar",yParallel[dimensions[i]], "\ninvert",yParallel[dimensions[i]].invert);
 				  extents[i]=event.selection.map(yParallel[dimensions[i]].invert,yParallel[dimensions[i]]);
 				  }
 		}
@@ -400,6 +407,7 @@ function createParallelCoords(delays, temp) {
 			return extents[i][1] <= d[p] && d[p] <= extents[i][0];
 			}) ? null : "none";
 		}); 
+		console.log("extents",extents);
 	}
 	function brushend(event) {
 		if (event.defaultPrevented) return; // click suppressed
@@ -414,7 +422,6 @@ function createChordDiagram(delays, temp) {
     // console.log('Inside createChordDiagram:', delays, temp);
     const outerRadius = width * 0.38 - 40;
     const innerRadius = outerRadius - 20;
-	
     const svg = d3
         .select("#chordDiagram")
         .append("svg")
@@ -524,7 +531,75 @@ function createChordDiagram(delays, temp) {
 		// .on("mouseout.second", unhighlight)
         .attr("d", ribbon);
 }
+// function createSunburst(delays, svg){
+// 	const radius = width * 0.38 - 40;
 
+// 	const aux = d3.groups(delays, d => stateToRegion[d.ORIGIN_STATE], d => d.ORIGIN_AIRPORT, d => d.DEP_DELAY);
+// 	const hierarchyDataAux = [{"code":"northeast", "children":[]},
+// 		 {"code":"west", "children":[]},
+// 		 {"code":"south", "children":[]},
+// 		 {"code":"midwest", "children":[]}]; // regions
+// 	console.log(aux);
+
+// 	aux.forEach(d => {
+// 		console.log("d:",d);
+// 		hierarchyDataAux.forEach(r => {
+// 			if (d[0] == r.code){
+// 				d[1].forEach(h => {
+// 					var delay1=0;
+// 					h[1].forEach(de => {delay1 += +de[0];})
+// 					console.log(h[0], delay1);
+// 					r.children.push({"code":h[0], "value":delay1})
+// 				});
+// 			}
+// 		})
+// 	});
+
+// 	hierarchyData = {"code":"REGION", "children":hierarchyDataAux};
+	
+// 	console.log(hierarchyData);
+// 	 // Create a partition layout for the sunburst
+// 	 const partition = data => {
+// 		const root = d3.hierarchy(data)
+// 			.sum(d => d.value)
+// 			.sort((a, b) => b.value - a.value);
+// 		return d3.partition().size([2 * Math.PI, root.height + 1])(root);
+// 	};
+
+// 	console.log("arc")
+// 	// Create an arc generator for drawing the sunburst segments
+// 	const arc = d3.arc()
+// 		.startAngle(d => d.x0)
+// 		.endAngle(d => d.x1)
+// 		.padAngle(0.01)
+// 		.padRadius(radius * 1.5)
+// 		.innerRadius(d => d.y0 * radius)
+// 		.outerRadius(d => Math.max(d.y0 * radius, d.y1 * radius - 1));
+
+// 	const root = partition(hierarchyData);
+// 	console.log("root", root)
+
+// 	// Create a path for each sunburst segment
+// 	const path = svg.selectAll("path")
+// 		.data(root.descendants())
+// 		.enter()
+// 		.append("path")
+// 		.attr("d", arc)
+// 		.attr("fill", "blue");
+
+// 	// Add text labels to the sunburst segments
+// 	svg.selectAll("text")
+// 		.data(root.descendants())
+// 		.enter()
+// 		.append("text")
+// 		.attr("transform", d => {
+// 			const x = (d.x0 + d.x1) / 2 * 180 / Math.PI;
+// 			const y = (d.y0 + d.y1) / 2 * radius;
+// 			return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
+// 		})
+// 		.attr("dy", "0.35em")
+// 		.text(d => {console.log("adding text labels",d); return d.data.code});
+// }
 function createLegend(){
 	var legend = [[20,1],[0,1],[-10,1]];
 	const widthLegend = 20;

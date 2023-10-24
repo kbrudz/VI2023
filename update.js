@@ -8,10 +8,10 @@ function updateParallel(data) {
 	const aggregatedData = d3.rollup(
 		data,
 		group => ({
-			DEP_DELAY_SUM: d3.sum(group, d => d.DEP_DELAY),
-			ARR_DELAY_SUM: d3.sum(group, d => d.ARR_DELAY),
-			CANCELLED_MEAN: d3.mean(group, d => d.CANCELLED),
-			DIVERTED_MEAN: d3.mean(group, d => d.DIVERTED),
+			AvgDepartureDelayMinutes: d3.sum(group, d => d.DEP_DELAY),
+			AvgArrivalDelayMinutes: d3.sum(group, d => d.ARR_DELAY),
+			CancelledFlights: d3.mean(group, d => d.CANCELLED),
+			DivertedFlights: d3.mean(group, d => d.DIVERTED),
 			ORIGIN_TYPE: group[0].ORIGIN_TYPE, // Assuming it's the same for all entries of the same airport
 			ORIGIN_STATE: group[0].ORIGIN_STATE, // Assuming it's the same for all entries of the same airport
 			ORIGIN: group[0].ORIGIN, // Assuming it's the same for all entries of the same airport
@@ -23,16 +23,20 @@ function updateParallel(data) {
 	// Convert the aggregated data back to an array for visualization
 	const formattedData = Array.from(aggregatedData, ([key, value]) => ({ ORIGIN_AIRPORT: key, ...value }));
 
-	const dimensions = ["DEP_DELAY_SUM", "ARR_DELAY_SUM", "CANCELLED_MEAN", "DIVERTED_MEAN", "AIRPORT_ELEVATION"];
+	const dimensions = ["AvgDepartureDelayMinutes", "AvgArrivalDelayMinutes", "CancelledFlights", "DivertedFlights", "AIRPORT_ELEVATION"];
 	origDimensions = dimensions.slice(0);
 	yParallel = {};
 	dimensions.forEach(dim => {
 		yParallel[dim] = d3.scaleLinear()
 			.domain([d3.max(d3.extent(formattedData, d => d[dim])), d3.min(d3.extent(formattedData, d => d[dim]))])
 			.range([0, height]);
-		if (dim == "CANCELLED_MEAN" || dim == "DIVERTED_MEAN")
+		if (dim == "DivertedFlights")
 			yParallel[dim] = d3.scaleLinear()
-				.domain([1,0])
+				.domain([0.1,0])
+				.range([0, height]);
+		if (dim == "CancelledFlights")
+			yParallel[dim] = d3.scaleLinear()
+				.domain([0.03,0])
 				.range([0, height]);
 	});
 
@@ -124,22 +128,53 @@ function updateParallel(data) {
 	// Add an axis and title.
 	g.selectAll(".axis")
 	.each(function(d) {  
-		if (d == "CANCELLED_MEAN" || d == "DIVERTED_MEAN")
-			d3.select(this).call(d3.axisLeft(yParallel[d]));
+		if (d == "CancelledFlights")
+			d3.select(this).call(d3.axisLeft(yParallel[d]).ticks(10).tickFormat(d3.format(".1%")));
+		else if (d == "DivertedFlights")
+			d3.select(this).call(d3.axisLeft(yParallel[d]).tickFormat(d3.format(".0%")));
 		else {d3.select(this).call(d3.axisLeft(yParallel[d]).tickFormat(d3.format(".2s")));}
 	});
 	// svg.selectAll(".brush").remove()
-	g.selectAll(".brush")
-		.each(function(d) {
-			if(yParallel[d].name == 'scale'){
-			d3.select(this)
-				.call(yParallel[d].brush = d3.brushY()
-					.extent([[-8, 0], [8,height]])
-					.on("start", (event, d) => brushstart(event, d))
-					.on("brush", (event, d) => brushing(event, d)))
-					.on("end", (event, d) => brushend(event, d));
-			}
-		})
+	var i = 0;
+	
+	// yParallelInverted = {};
+	// dimensions.forEach(dim => {
+	// 	yParallelInverted[dim] = d3.scaleLinear()
+	// 		.domain([0, height])
+	// 		.range([d3.max(d3.extent(formattedData, d => d[dim])), d3.min(d3.extent(formattedData, d => d[dim]))]);
+	// 	if (dim == "CancelledFlights" || dim == "DivertedFlights")
+	// 		yParallelInverted[dim] = d3.scaleLinear()
+	// 			.domain([0, height])
+	// 			.range([1,0]);
+	// });
+
+	// TODO FIX brush
+	// var new_extents = [], y0, y1;
+	// new_extents = dimensions.map(function(p) { return [0,0]; });
+	// for (var i = 0; i<new_extents.length; i++){
+	// 	if (extents[i][0] == 0 && extents[i][1] == 0){
+	// 		continue;
+	// 	}
+	// 	else{
+	// 		y0 = yParallel[dimensions[i]](extents[i][1]);
+	// 		y1 = yParallel[dimensions[i]](extents[i][0]);
+	// 		new_extents[i][1] = (y0 - y1)/2;//height
+	// 		new_extents[i][0] = y1+new_extents[i][1];
+	// 		console.log("y0", y0, "y1", y1);
+	// 	}
+	// }
+	// for(var i=0;i<dimensions.length;++i){
+	// 	console.log("yPar",yParallel[dimensions[i]], "\ninvert",yParallel[dimensions[i]].invert);
+	// 	// extents[i]=d3.selectAll(".dimension").map(yParallel[dimensions[i]].invert,yParallel[dimensions[i]]);
+	// }
+	// console.log("new extents fds",new_extents);
+	// var i = -1;
+	// d3.selectAll(".dimension")
+	// 	.select(".brush")
+	// 	.select(".selection")
+	// 	.attr("y", d => {i++; return new_extents[i][0];})
+	// 	.attr("height", d => {return new_extents[i][1];});
+
 	
 	function path(d) {
 		return line(dimensions.map(function(p) { return [position(p), yParallel[p](d[p])]; }));
