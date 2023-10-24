@@ -31,7 +31,7 @@ var tempColorScale = d3.scaleLinear()
 		// .range(["red", "#ffefef", "blue"])
 		.range(["#00008B", "#ffffff", "#8B0000"])
 		.domain([-10,0,20]);
-		
+
 // Function to create a bar chart
 function createStreamGraph(delays, temp) {
 	//set the dimensions and margins of the graph
