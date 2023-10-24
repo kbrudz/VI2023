@@ -321,7 +321,7 @@ function createParallelCoords(delays, temp) {
 			.attr("class", "axis")
 			.each(function(d) {  
 				if (d == "CancelledFlights")
-					d3.select(this).call(d3.axisLeft(yParallel[d]).ticks(10).tickFormat(d3.format(".1%")));
+					d3.select(this).call(d3.axisLeft(yParallel[d]).ticks(7).tickFormat(d3.format(".1%")));
 				else if (d == "DivertedFlights")
 					d3.select(this).call(d3.axisLeft(yParallel[d]).tickFormat(d3.format(".0%")));
 				else {d3.select(this).call(d3.axisLeft(yParallel[d]).tickFormat(d3.format(".2s")));}
