@@ -1,41 +1,30 @@
 function showTooltip(event, d){
-    d3.select('#tooltip')
-        .transition()
-        .style("opacity", 1)
-        .style("left", (event.pageX+1) + "px")
-        .style("top", (event.pageY+1) + "px");
+	d3.select('#tooltip')
+		.transition()
+		.style("opacity", 1)
 
-	const regions = ["west", "south", "midwest", "northeast"];
-	if(d.ORIGIN_AIRPORT != null)
+	if(d.ORIGIN_AIRPORT)
 		document.getElementById("tooltip")
 			.innerHTML= "Airport: " + d.ORIGIN_AIRPORT + "<br>" +
-			"Region: " + stateToRegion[d.ORIGIN_STATE] +"<br>" +
-			"Delay: " + d.ARR_DELAY_SUM;
-	else if(d.date != null){
-		if (tempUnit == "C")
-			document.getElementById("tooltip")
-				.innerHTML= "Date: " + d.date + "<br>" +
-				"Average Temperature: " + parseFloat(d.avgTempC).toFixed(1) +"ºC";
-		else if (tempUnit == "F")
-			document.getElementById("tooltip")
-				.innerHTML= "Date: " + d.date + "<br>" +
-				"Average Temperature: " + parseFloat(d.avgTempF).toFixed(1) +"ºF";
-	}
-    else if (regions.find(v => v == d) != null){
+				"Region: " + stateToRegion[d.ORIGIN_STATE] +"<br>" +
+				"Delay: " + d.ARR_DELAY_SUM;
+	else if(d.date)
+		document.getElementById("tooltip")
+			.innerHTML= "Date: " + d.date + "<br>" +
+				"Average Temperature: " + parseFloat(tempUnit == "C" ? d.avgTempC : d.avgTempF).toFixed(1) + "º" + tempUnit;
+	else if(globalRegions.find(v => v == d) != null)
 		document.getElementById("tooltip")
 			.innerHTML= "Region: " + d;
-	}
-	else if (d.index != null){
+	else if (d.index != null)
 		document.getElementById("tooltip")
-			.innerHTML= "Region: " + regions[d.index];
-	}
-  }
+			.innerHTML= "Region: " + globalRegions[d.index];
+}
 
 function hideTooltip(d){
 	d3.select('#tooltip')
-        .transition().duration(2000)
+    .transition().duration(250)
 		.style("opacity", 0)
-  }
+}
   
 
 	// TODO: Highlight the specie that is hovered

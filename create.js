@@ -65,7 +65,7 @@ function createStreamGraph(delays, temp) {
 	// append the svg object to the body of the page
 	let svg = d3.select("#streamGraph")
 		.append("svg")
-		.attr("width", width + margin.left + margin.right + 100) 
+		.attr("width", width + margin.left + margin.right) 
 		.attr("height", height + margin.top + margin.bottom)
 		.append("g")
 		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -81,7 +81,6 @@ function createStreamGraph(delays, temp) {
 		.domain([0, d3.max(delaysPerDate, d => d.delay)])
 		.nice()
 		.range([height, 0]);
-	
 
 	const lineGenerators = {};
 	//console.log("filter",delaysPerDate);
@@ -222,8 +221,8 @@ function createParallelCoords(delays, temp) {
 
 	// Define your dimensions
 	const dimensions = ["AvgDepartureDelayMinutes", "AvgArrivalDelayMinutes", "CancelledFlights", "DivertedFlights", "AIRPORT_ELEVATION"];
-	origDimensions = dimensions.slice(0);
-	const yParallel = {};
+	let yParallel = {};
+	
 	dimensions.forEach(dim => {
 		yParallel[dim] = d3.scaleLinear()
 			.domain([d3.max(d3.extent(formattedData, d => d[dim])), d3.min(d3.extent(formattedData, d => d[dim]))])
@@ -243,9 +242,9 @@ function createParallelCoords(delays, temp) {
 	var x = d3.scalePoint().rangeRound([0, width]).padding(1).domain(dimensions),
 		line = d3.line(),
 		dragging = {},
+		origDimensions = dimensions.slice(0)
 		background,
-		foreground,
-		origDimensions;
+		foreground;
 
 	var svg = d3.select("#parallelCoords").append("svg")
 		.attr("width", width + margin.left + margin.right)
@@ -261,6 +260,9 @@ function createParallelCoords(delays, temp) {
 		.enter().append("path")
 		.attr("d", path);
 	// Add blue foreground lines for focus.
+
+	const wScale = d3.scaleOrdinal().domain(["small_airport", "medium_airport", "large_airport"]).range([1,2,4]);
+
 	foreground = svg.append("g")
 		.attr("class", "foreground")
 		.selectAll("path")
@@ -269,7 +271,7 @@ function createParallelCoords(delays, temp) {
 		.attr("d", path)
 		.attr("class","data")
 		.style("stroke", (d) => regionColors[stateToRegion[d.ORIGIN_STATE]])
-		.style("stroke-width", 1)
+		.style("stroke-width", (d) => wScale(d.ORIGIN_TYPE))
 		.style("fill", "none")
 		.style("cursor", "pointer")
 		.style("pointer-events", "visible")

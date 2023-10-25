@@ -24,8 +24,8 @@ function updateParallel(data) {
 	const formattedData = Array.from(aggregatedData, ([key, value]) => ({ ORIGIN_AIRPORT: key, ...value }));
 
 	const dimensions = ["AvgDepartureDelayMinutes", "AvgArrivalDelayMinutes", "CancelledFlights", "DivertedFlights", "AIRPORT_ELEVATION"];
-	origDimensions = dimensions.slice(0);
-	yParallel = {};
+
+	let yParallel = {};
 	dimensions.forEach(dim => {
 		yParallel[dim] = d3.scaleLinear()
 			.domain([d3.max(d3.extent(formattedData, d => d[dim])), d3.min(d3.extent(formattedData, d => d[dim]))])
@@ -40,20 +40,19 @@ function updateParallel(data) {
 				.range([0, height]);
 	});
 
-	var x = d3.scalePoint().rangeRound([0, width]).padding(1).domain(dimensions),
-		line = d3.line(),
+	const x = d3.scalePoint().rangeRound([0, width]).padding(1).domain(dimensions);
+	const wScale = d3.scaleOrdinal().domain(["small_airport", "medium_airport", "large_airport"]).range([1,2,3]);	
+
+	let line = d3.line(),
 		dragging = {},
-		origDimensions;
+		origDimensions = dimensions.slice(0);
 
+	// Select all existing bars and bind the data to them
+	background = svg.selectAll(".background").selectAll("path").data(formattedData, (d) => d.ORIGIN_AIRPORT);
+	foreground = svg.selectAll(".foreground").selectAll("path").data(formattedData, (d) => d.ORIGIN_AIRPORT);
 
-	var line = d3.line();
-
-    // Select all existing bars and bind the data to them
-    background = svg.selectAll(".background").selectAll("path").data(formattedData, (d) => d.ORIGIN_AIRPORT);
-    foreground = svg.selectAll(".foreground").selectAll("path").data(formattedData, (d) => d.ORIGIN_AIRPORT);
-
-    // Update existing bars with transitions for position, width, height, and color
-    background
+	// Update existing bars with transitions for position, width, height, and color
+	background
 		.transition()
 		.duration(1000)
 		.attr("d", path);
@@ -62,20 +61,20 @@ function updateParallel(data) {
 		.duration(1000)
 		.attr("d", path)
 		.style("stroke", (d) => regionColors[stateToRegion[d.ORIGIN_STATE]])
-		.style("stroke-width", 1)
+		.style("stroke-width", (d) => wScale(d.ORIGIN_TYPE))
 		.style("fill", "none");
-	
-    // Add new bars for any new data points and transition them to their correct position and width
-    background
-        .enter()
-        .append("path")
+
+	// Add new bars for any new data points and transition them to their correct position and width
+	background
+		.enter()
+		.append("path")
 		.attr("class", (d) => d.ORIGIN)
 		.attr("d", path)
-        .transition()
-        .duration(4000);
+		.transition()
+		.duration(4000);
 	foreground
-        .enter()
-        .append("path")
+		.enter()
+		.append("path")
 		.attr("class", (d) => d.ORIGIN)
 		.attr("d", path)
 		.style("stroke", (d) => regionColors[stateToRegion[d.ORIGIN_STATE]])
@@ -88,14 +87,14 @@ function updateParallel(data) {
 		// .on("mouseover.second", (event, d)=>{ highlight(event, d)})
 		.on("mouseout", hideTooltip) // Function defined below
 		// .on("mouseout.second", unhighlight)
-        .transition()
-        .duration(4000);
-  
-    // Remove any bars that are no longer in the updated data
-    background.exit().transition().duration(100).attr("width", 0).remove();
-    foreground.exit().transition().duration(100).attr("width", 0).remove();
+				.transition()
+				.duration(4000);
+
+	// Remove any bars that are no longer in the updated data
+	background.exit().transition().duration(100).attr("width", 0).remove();
+	foreground.exit().transition().duration(100).attr("width", 0).remove();
 	
-	var g = svg.selectAll(".dimension").data(dimensions)
+	let g = svg.selectAll(".dimension").data(dimensions)
 		.data(dimensions)
 		.attr("transform", function(d) { return "translate(" + x(d) + ")"; })
 		.call(d3.drag()

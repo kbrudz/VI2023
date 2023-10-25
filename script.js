@@ -19,6 +19,14 @@ const width = 600 - margin.left - margin.right;
 const height = 400 - margin.top - margin.bottom;
 const widthParallel = 1800 - margin.left - margin.right;
 
+document.addEventListener('mousemove', moveTooltip, false);
+
+function moveTooltip(e) {
+    d3.select('#tooltip')
+        .style("left", (e.pageX) + 10 + "px")
+        .style("top", (e.pageY - 20) + "px");
+}
+
 // This function initiates the dashboard and loads the JSON data.
 function startDashboard() {
     // Load the both CSV files using D3.csv
