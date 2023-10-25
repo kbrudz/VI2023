@@ -474,6 +474,7 @@ function createChordDiagram(delays, temp) {
 
     groups
         .append("path")
+		.attr("class", "data")
         .style("fill", (d) => regionColors[regions[d.index]])
         .style("stroke", (d) => regionColors[regions[d.index]])
         .attr("d", arc)
@@ -490,7 +491,7 @@ function createChordDiagram(delays, temp) {
         .attr("xlink:href", (d) => `#group-arc-${d.index}`)
         .text((d) => regions[d.index]);
 
-		const labels = svg
+	const labels = svg
 		.selectAll("g.label")
 		.data(chords.groups)
 		.enter()
@@ -517,18 +518,18 @@ function createChordDiagram(delays, temp) {
 		.style("fill", (d) => regionColors[regions[d.index]]) // Set text fill color
 		.text((d) => regions[d.index]);
 
-		function handleClick(event, d) {
-			updateIdioms(regions[d.index]);
-			const groups = svg.selectAll("g.group");
-		
-			groups.select("path")
-				.style("stroke", (d) => regionColors[regions[d.index]])
-				.style("stroke-width", null);
-		
-			const selectedGroup = groups.filter((groupData) => groupData.index === d.index);
-			selectedGroup.select("path")
-				.style("stroke", "#fbfe88")  
-				.style("stroke-width", 3); 
+	function handleClick(event, d) {
+		updateIdioms(regions[d.index]);
+		const groups = svg.selectAll("g.group");
+	
+		groups.select("path")
+			.style("stroke", (d) => regionColors[regions[d.index]])
+			.style("stroke-width", null);
+	
+		const selectedGroup = groups.filter((groupData) => groupData.index === d.index);
+		selectedGroup.select("path")
+			.style("stroke", "#fbfe88")  
+			.style("stroke-width", 3); 
 	}
 
 	// Function implemented in linked.js
@@ -540,7 +541,7 @@ function createChordDiagram(delays, temp) {
     svg.selectAll("path.chord")
         .data(chord(delaysMatrix))
         .enter().append("path")
-        .attr("class", "chord data")
+        .attr("class", "chord")
         .style("fill", function (d) {
             return `url(#chordGradient-${d.source.index}-${d.target.index})`;
         })
