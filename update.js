@@ -417,6 +417,8 @@ function updateChordDiagram(delays, temp) {
 		.attr("text-anchor", "middle")
 		.attr("class", "slanted-label")
 		.style("fill", (d) => regionColors[regions[d.index]]) // Set text fill color
+		.attr("stroke", (d) => regionColors[regions[d.index]]) // Set text fill color
+		.attr("font-weight",900)
 		.text((d) => regions[d.index]);
 
 		function handleClick(event, d) {
