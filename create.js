@@ -420,7 +420,7 @@ function createChordDiagram(delays, temp) {
 	// #TO DO Show % of delays when you choose a region
 	
     // console.log('Inside createChordDiagram:', delays, temp);
-    const outerRadius = width * 0.38 - 40;
+    const outerRadius = width * 0.35 - 40;
     const innerRadius = outerRadius - 20;
     const svg = d3
         .select("#chordDiagram")
@@ -511,6 +511,33 @@ function createChordDiagram(delays, temp) {
         .append("textPath")
         .attr("xlink:href", (d) => `#group-arc-${d.index}`)
         .text((d) => regions[d.index]);
+
+		const labels = svg
+		.selectAll("g.label")
+		.data(chords.groups)
+		.enter()
+		.append("g")
+		.attr("class", "label")
+		.attr("transform", (d) => {
+			let angle = (d.startAngle + d.endAngle) / 2;
+			const radius = outerRadius + 10; // Adjust the radius for label placement
+			
+			if (d.index == 1 || d.index == 2){
+				return `translate(${radius * Math.cos(angle - Math.PI / 2)}, ${radius * Math.sin(angle - Math.PI / 2)}) rotate(${angle * (180 / Math.PI)}) rotate(180)`;
+			}
+			else{
+				return `translate(${radius * Math.cos(angle - Math.PI / 2)}, ${radius * Math.sin(angle - Math.PI / 2)}) rotate(${angle * (180 / Math.PI)})`;
+			}	
+			
+		});
+	
+	labels
+		.append("text")
+		.attr("dy", 6) // Adjust the vertical position
+		.attr("text-anchor", "middle")
+		.attr("class", "slanted-label")
+		.style("fill", (d) => regionColors[regions[d.index]]) // Set text fill color
+		.text((d) => regions[d.index]);
 
 		function handleClick(event, d) {
 			updateIdioms(regions[d.index]);
