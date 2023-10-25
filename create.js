@@ -434,11 +434,15 @@ function createChordDiagram(delays, temp) {
     const regions = ["west", "south", "midwest", "northeast"]; // regions
 
     // Create a matrix of the delays between regions
-    const delaysMatrix = regions.map((sourceRegion) =>
-			regions.map((targetRegion) =>
-				d3.sum(delays.filter(d => stateToRegion[d.ORIGIN_STATE] === sourceRegion && stateToRegion[d.DEST_STATE] === targetRegion), d => d.DEP_DELAY)
-			)
-    );
+	const delaysMatrix = regions.map((sourceRegion) =>
+    regions.map((targetRegion) => {
+        const matchingDelays = delays.filter(d => stateToRegion[d.ORIGIN_STATE] === sourceRegion && stateToRegion[d.DEST_STATE] === targetRegion);
+        if (matchingDelays.length === 0) {
+            return 0; // To prevent division by zero, return 0 if no matching delays
+        }
+        return d3.mean(matchingDelays, d => d.DEP_DELAY);
+    })
+);
 
     const chord = d3.chord()
         .padAngle(0.05)
