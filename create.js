@@ -261,7 +261,7 @@ function createParallelCoords(delays, temp) {
 		.attr("d", path);
 	// Add blue foreground lines for focus.
 
-	const wScale = d3.scaleOrdinal().domain(["small_airport", "medium_airport", "large_airport"]).range([1,2,4]);
+	const wScale = d3.scaleOrdinal().domain(["small_airport", "medium_airport", "large_airport"]).range([1,2,]);
 
 	foreground = svg.append("g")
 		.attr("class", "foreground")
@@ -403,26 +403,21 @@ function createChordDiagram(delays, temp) {
     const outerRadius = width * 0.35 - 40;
     const innerRadius = outerRadius - 20;
     const svg = d3
-        .select("#chordDiagram")
-        .append("svg")
-        .attr("width", width)
-        .attr("height", height)
-        .append("g")
-        .attr("transform", `translate(${width / 2},${(height) / 2})`);
-
-
-    const regions = ["west", "south", "midwest", "northeast"]; // regions
+			.select("#chordDiagram")
+			.append("svg")
+			.attr("width", width)
+			.attr("height", height)
+			.append("g")
+			.attr("transform", `translate(${width / 2},${(height) / 2})`);
 
     // Create a matrix of the delays between regions
-	const delaysMatrix = regions.map((sourceRegion) =>
-    regions.map((targetRegion) => {
+		const delaysMatrix = globalRegions.map((sourceRegion) =>
+		globalRegions.map((targetRegion) => {
         const matchingDelays = delays.filter(d => stateToRegion[d.ORIGIN_STATE] === sourceRegion && stateToRegion[d.DEST_STATE] === targetRegion);
-        if (matchingDelays.length === 0) {
-            return 0; // To prevent division by zero, return 0 if no matching delays
-        }
+        if (matchingDelays.length === 0) return 0; // To prevent division by zero, return 0 if no matching delays
         return d3.mean(matchingDelays, d => d.DEP_DELAY);
-    })
-);
+    	})
+		);
 
     const chord = d3.chord()
         .padAngle(0.05)
@@ -458,13 +453,13 @@ function createChordDiagram(delays, temp) {
 		grads.append("stop")
         .attr("offset", "0%")
         .attr("stop-color", function (d) {
-            return regionColors[regions[d.source.index]];
+            return regionColors[globalRegions[d.source.index]];
         });
 
     grads.append("stop")
         .attr("offset", "100%")
         .attr("stop-color", function (d) {
-            return regionColors[regions[d.target.index]];
+            return regionColors[globalRegions[d.target.index]];
         });
 	// Create the arcs + shows region when you hover over it
 	const groups = svg
@@ -477,8 +472,8 @@ function createChordDiagram(delays, temp) {
     groups
         .append("path")
 		.attr("class", "data")
-        .style("fill", (d) => regionColors[regions[d.index]])
-        .style("stroke", (d) => regionColors[regions[d.index]])
+        .style("fill", (d) => regionColors[globalRegions[d.index]])
+        .style("stroke", (d) => regionColors[globalRegions[d.index]])
         .attr("d", arc)
         .style("cursor", "pointer")
 				.on("click", handleClick)
@@ -491,7 +486,7 @@ function createChordDiagram(delays, temp) {
         .attr("dy", 15)
         .append("textPath")
         .attr("xlink:href", (d) => `#group-arc-${d.index}`)
-        .text((d) => regions[d.index]);
+        .text((d) => globalRegions[d.index]);
 
 	const labels = svg
 		.selectAll("g.label")
@@ -517,15 +512,15 @@ function createChordDiagram(delays, temp) {
 		.attr("dy", 8) // Adjust the vertical position
 		.attr("text-anchor", "middle")
 		.attr("class", "slanted-label")
-		.style("fill", (d) => regionColors[regions[d.index]]) // Set text fill color
-		.attr("stroke", (d) => regionColors[regions[d.index]]) // Set text fill color
+		.style("fill", (d) => regionColors[globalRegions[d.index]]) // Set text fill color
+		.attr("stroke", (d) => regionColors[globalRegions[d.index]]) // Set text fill color
 		.attr("font-weight",900)
-		.text((d) => regions[d.index]);
+		.text((d) => globalRegions[d.index]);
 
 	function handleClick(event, d) {
-		updateIdioms(regions[d.index]);
+		updateIdioms(globalRegions[d.index]);
+		/*
 		const groups = svg.selectAll("g.group");
-	
 		groups.select("path")
 			.style("stroke", (d) => regionColors[regions[d.index]])
 			.style("stroke-width", null);
@@ -534,6 +529,7 @@ function createChordDiagram(delays, temp) {
 		selectedGroup.select("path")
 			.style("stroke", "#fbfe88")  
 			.style("stroke-width", 3); 
+		*/
 	}
 
 	// Function implemented in linked.js
@@ -549,12 +545,9 @@ function createChordDiagram(delays, temp) {
         .style("fill", function (d) {
             return `url(#chordGradient-${d.source.index}-${d.target.index})`;
         })
-        .style("opacity", 0.8)
-		.on("mouseover", (event, d)=>{ showTooltip(event, d)})
-		// .on("mouseover.second", (event, d)=>{ highlight(event, d)})
-		.on("mouseout", hideTooltip) // Functi
-		// .on("mouseout.second", unhighlight)
         .attr("d", ribbon);
+
+		d3.selectAll("path.chord").attr("opacity", 0.8);
 }
 // function createSunburst(delays, svg){
 // 	const radius = width * 0.38 - 40;

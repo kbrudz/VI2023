@@ -41,7 +41,7 @@ function updateParallel(data) {
 	});
 
 	const x = d3.scalePoint().rangeRound([0, width]).padding(1).domain(dimensions);
-	const wScale = d3.scaleOrdinal().domain(["small_airport", "medium_airport", "large_airport"]).range([1,2,3]);	
+	const wScale = d3.scaleOrdinal().domain(["small_airport", "medium_airport", "large_airport"]).range([1,2,4]);	
 
 	let line = d3.line(),
 		dragging = {},
@@ -77,6 +77,7 @@ function updateParallel(data) {
 		.append("path")
 		.attr("class", (d) => d.ORIGIN)
 		.attr("d", path)
+		.attr("class","data")
 		.style("stroke", (d) => regionColors[stateToRegion[d.ORIGIN_STATE]])
 		.style("stroke-width", 1)
 		.style("fill", "none")
@@ -87,8 +88,8 @@ function updateParallel(data) {
 		// .on("mouseover.second", (event, d)=>{ highlight(event, d)})
 		.on("mouseout", hideTooltip) // Function defined below
 		// .on("mouseout.second", unhighlight)
-				.transition()
-				.duration(4000);
+		.transition()
+		.duration(4000);
 
 	// Remove any bars that are no longer in the updated data
 	background.exit().transition().duration(100).attr("width", 0).remove();
@@ -321,10 +322,8 @@ function updateChordDiagram(delays, temp) {
     const outerRadius = width * 0.35 - 40;
     const innerRadius = outerRadius - 20;
 
-	const regions = ["west", "south", "midwest", "northeast"];
-
-	const delaysMatrix = regions.map((sourceRegion) =>
-    regions.map((targetRegion) => {
+	const delaysMatrix = globalRegions.map((sourceRegion) =>
+		globalRegions.map((targetRegion) => {
         const matchingDelays = delays.filter(d => stateToRegion[d.ORIGIN_STATE] === sourceRegion && stateToRegion[d.DEST_STATE] === targetRegion);
         if (matchingDelays.length === 0) {
             return 0; // To prevent division by zero, return 0 if no matching delays
@@ -369,13 +368,13 @@ function updateChordDiagram(delays, temp) {
 	grads.append("stop")
 		.attr("offset", "0%")
 		.attr("stop-color", function (d) {
-				return regionColors[regions[d.source.index]];
+				return regionColors[globalRegions[d.source.index]];
 		});
 
 	grads.append("stop")
 		.attr("offset", "100%")
 		.attr("stop-color", function (d) {
-				return regionColors[regions[d.target.index]];
+				return regionColors[globalRegions[d.target.index]];
 		});
 
 	const groups = svg.selectAll("g.group")
@@ -385,13 +384,14 @@ function updateChordDiagram(delays, temp) {
 		.attr("class", "group");
 
 	groups.append("path")
-		.style("fill", (d) => regionColors[regions[d.index]])
-		.style("stroke", (d) => regionColors[regions[d.index]])
+		.attr("class", "data")
+		.style("fill", (d) => regionColors[globalRegions[d.index]])
+		.style("stroke", (d) => regionColors[globalRegions[d.index]])
 		.attr("d", arc)
 		.style("cursor", "pointer")
 		.on("click", handleClick)
 		.on("mouseover", handleMouseOver)
-		.on("mouseout", hideTooltip);	
+		.on("mouseout", handleMouseOut);	
 	const labels = svg
 		.selectAll("g.label")
 		.data(chords.groups)
@@ -416,29 +416,24 @@ function updateChordDiagram(delays, temp) {
 		.attr("dy", 6) // Adjust the vertical position
 		.attr("text-anchor", "middle")
 		.attr("class", "slanted-label")
-		.style("fill", (d) => regionColors[regions[d.index]]) // Set text fill color
-		.attr("stroke", (d) => regionColors[regions[d.index]]) // Set text fill color
+		.style("fill", (d) => regionColors[globalRegions[d.index]]) // Set text fill color
+		.attr("stroke", (d) => regionColors[globalRegions[d.index]]) // Set text fill color
 		.attr("font-weight",900)
-		.text((d) => regions[d.index]);
+		.text((d) => globalRegions[d.index]);
 
 		function handleClick(event, d) {
-			updateIdioms(regions[d.index]);
+			updateIdioms(globalRegions[d.index]);
 			const groups = svg.selectAll("g.group");
-		
+		/*
 			groups.select("path")
-				.style("stroke", (d) => regionColors[regions[d.index]])
+				.style("stroke", (d) => regionColors[globalRegions[d.index]])
 				.style("stroke-width", null);
 		
 			const selectedGroup = groups.filter((groupData) => groupData.index === d.index);
 			selectedGroup.select("path")
 				.style("stroke", "#fbfe88")  
 				.style("stroke-width", 3); 
-	}
-
-	function handleMouseOver(event, d) {
-		const tooltip = d3.select("#tooltip");
-		tooltip.transition().duration(200).style("opacity", 0.9);
-		tooltip.html(`Region: ${regions[d.index]}`);
+		*/
 	}
 
 	const chordPaths = svg.selectAll("path.chord")
@@ -448,13 +443,9 @@ function updateChordDiagram(delays, temp) {
 		.style("fill", function (d) {
 			return `url(#chordGradient-${d.source.index}-${d.target.index})`;
 		})
-		.style("opacity", 0.8)
-		.on("mouseover", (event, d) => {
-			showTooltip(event, d);
-		})
-		.on("mouseout", hideTooltip)
 		.attr("d", ribbon);
-		
+
+		d3.selectAll("path.chord").attr("opacity", 0.8);
 }
 
 

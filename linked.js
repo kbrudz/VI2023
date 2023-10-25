@@ -50,58 +50,40 @@ function hideTooltip(d){
 	// This function is triggered when the mouse pointer is over an element.
 function handleMouseOver(event, item) {
 	showTooltip(event, item);
-	if(item.date || item === undefined || item === null){
-		return;
-	}
-    const regions = ["west", "south", "midwest", "northeast"]; // regions
+	if(item.date || !item) return;
 
 	// Select all elements with the class "data" using D3.js
-	d3.selectAll(".data")
-		// Change the "fill" attribute of all the elements to "steelblue".
-		.attr("opacity", 0.2);
+	d3.selectAll(".data").attr("opacity", 0.1);
+	d3.selectAll("path.chord").attr("opacity", 0.08);
 
-	var selected;
-	if (regions.includes(item))
+	let selected;
+	if (globalRegions.includes(item))
 		selected = item;
 	else if(item.index !== undefined)
-		selected = regions[item.index];
+		selected = globalRegions[item.index];
 	else if(item.ORIGIN_AIRPORT !== null)
 		selected = stateToRegion[item.ORIGIN_STATE];
-	console.log("logging d item",item, selected);
 
 	d3.selectAll(".data")
-	// Filter the selection based on a custom condition.
-		.filter(function (d) {
-			console.log("evaluating: ", d);
-			if (d === undefined){
-				// console.log("undefined");
-				return false;
-			}
-			if( regions.includes(d)){
-				// console.log("entered condition 1", d);
-				return selected == d;}
-			else if(d.index !== undefined){
-				console.log("entered condition 2", d);
-				// Return true for elements whose "title" property matches the "title" property of the "item" parameter.
-				return selected == regions[d.index];}
-			else if(d.ORIGIN_AIRPORT !== null){
-				// console.log("entered condition 3", d);
-				// Return true for elements whose "title" property matches the "title" property of the "item" parameter.
-				return selected == stateToRegion[d.ORIGIN_STATE];}
-			else{console.log("missing chord element", d);return false;};
+		.filter((d) => {
+			if (d === undefined) return false;
+			else if(globalRegions.includes(d)) return selected == d;
+			else if(d.index !== undefined) return selected == globalRegions[d.index];
+			else if(d.ORIGIN_AIRPORT !== null) return selected == stateToRegion[d.ORIGIN_STATE];
+			else return false;
 		})
-	// Change the "fill" attribute of the filtered elements to "red".
-	.attr("opacity", 1);
+		.attr("opacity", 1);
+
+	d3.selectAll("path.chord").filter((d =>
+		selected === globalRegions[d.source.index] || selected === globalRegions[d.target.index]
+	))
+	.attr("opacity", 0.8);
 	
-  }
+}
 
   // This function is triggered when the mouse pointer moves out of an element (mouseout event).
 function handleMouseOut(event, item) {
 	hideTooltip(event, item);
-
-	// Select all elements with the class "data" using D3.js
-	d3.selectAll(".data")
-	  // Change the "fill" attribute of all the elements to "steelblue".
-	  .attr("opacity", 1);
-  
-  }
+	d3.selectAll(".data").attr("opacity", 1);
+	d3.selectAll("path.chord").attr("opacity", 0.8);
+}
