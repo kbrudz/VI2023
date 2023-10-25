@@ -74,35 +74,22 @@ function updateIdioms(data) {
 
 function updateTempUnit(unit) {
     const temperatureData = globalTemp;
+    tempUnit = unit;
     var legend = [[20,1],[0,1],[-10,1]];
-    var legendF = [[55,1],[35,1],[15,1]];
-    var legendC = [[20,1],[0,1],[-10,1]];
-
-    const svg = d3.select("#streamGraph").select("svg");
-    const svgLegend = d3.select(".createLegend").select("svg");
+    var xLegend = d3.scaleBand()
+        .range([ 0, 100 ])
+        .domain(legend.map(d => d[0]))
+        .padding(0.2);
+    const svgLegend = d3.select(".legend");
+    // console.log(svgLegend);
     //create domain for color scale for Fahrenheit 	.range(["#00008B", "#ffffff", "#8B0000"]) .domain([15,35,55])
-    const tempColorScale = d3.scaleLinear()
-        .range(["#00008B", "#ffffff", "#8B0000"])
-        .domain([-10,0,20]);
-    //create domain for color scale for Celsius
-    const tempColorScaleC = d3.scaleLinear()
-        .range(["#00008B", "#ffffff", "#8B0000"])
-        .domain([-10,0,20]);
-    //create domain for color scale for Fahrenheit
-    const tempColorScaleF = d3.scaleLinear()
-        .range(["#00008B", "#ffffff", "#8B0000"])
-        .domain([15,35,68]);
-
-    const useFahrenheit = unit === "F";
-    svg.selectAll(".rect")
-        .attr("fill", (d) => {
-            if (useFahrenheit) {
-                return tempColorScaleF(d.avgTempF)
-            } else {
-                return tempColorScaleC(d.avgTempC)
-            }
-        });
-    }
+    let tickLabelsC = ["20ºC", "0ºC", "-10ºC"];
+    let tickLabelsF = ["68F", "32F", "14FºC"];
+    if (unit == "C")
+	    svgLegend.call(d3.axisBottom(xLegend).ticks(3).tickFormat((d,i) => tickLabelsC[i]))
+    else if (unit == "F")
+	    svgLegend.call(d3.axisBottom(xLegend).ticks(3).tickFormat((d,i) => tickLabelsF[i]))
+}
 
 
 

@@ -12,10 +12,14 @@ function showTooltip(event, d){
 			"Region: " + stateToRegion[d.ORIGIN_STATE] +"<br>" +
 			"Delay: " + d.ARR_DELAY_SUM;
 	else if(d.date != null){
-		document.getElementById("tooltip")
-			.innerHTML= "Date: " + d.date + "<br>" +
-			"Average Temperature: " + parseFloat(d.avgTempC).toFixed(1) +"ºC" +"<br>" +
-			"Average Temperature: " + parseFloat(d.avgTempF).toFixed(1) +"ºF";
+		if (tempUnit == "C")
+			document.getElementById("tooltip")
+				.innerHTML= "Date: " + d.date + "<br>" +
+				"Average Temperature: " + parseFloat(d.avgTempC).toFixed(1) +"ºC";
+		else if (tempUnit == "F")
+			document.getElementById("tooltip")
+				.innerHTML= "Date: " + d.date + "<br>" +
+				"Average Temperature: " + parseFloat(d.avgTempF).toFixed(1) +"ºF";
 	}
     else if (regions.find(v => v == d) != null){
 		document.getElementById("tooltip")

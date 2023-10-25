@@ -7,7 +7,7 @@ var dragging = {},
     legend,
     brush_count = 0,
     excluded_groups = [],
-	extents;
+	extents, tempUnit = "C";
 
 const stateToRegion = {
 	//West
@@ -640,6 +640,7 @@ function createLegend(){
 	let tickLabels = ["20ºC", "0ºC", "-10ºC"];
 	svgLegend.append("g")
 		.attr("transform", "translate(" + 0 + ",0)")
+		.attr("class", "legend")
 		.call(d3.axisBottom(xLegend).ticks(3).tickFormat((d,i) => tickLabels[i]))
 		.attr('stroke-width', 0)
 		.selectAll("text")
