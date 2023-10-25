@@ -319,16 +319,20 @@ function updateChordDiagram(delays, temp) {
 	// console.log('Inside updateChordDiagram:', delays, temp);
 	const svg = d3.select("#chordDiagram").select("svg").select("g");
 	svg.selectAll("*").remove(); 
-    const outerRadius = width * 0.38 - 40;
+    const outerRadius = width * 0.35 - 40;
     const innerRadius = outerRadius - 20;
 
 	const regions = ["west", "south", "midwest", "northeast"];
 
 	const delaysMatrix = regions.map((sourceRegion) =>
-		regions.map((targetRegion) =>
-			d3.sum(delays.filter(d => stateToRegion[d.ORIGIN_STATE] === sourceRegion && stateToRegion[d.DEST_STATE] === targetRegion), d => d.DEP_DELAY)
-		)
-	);
+    regions.map((targetRegion) => {
+        const matchingDelays = delays.filter(d => stateToRegion[d.ORIGIN_STATE] === sourceRegion && stateToRegion[d.DEST_STATE] === targetRegion);
+        if (matchingDelays.length === 0) {
+            return 0; // To prevent division by zero, return 0 if no matching delays
+        }
+        return d3.mean(matchingDelays, d => d.DEP_DELAY);
+    })
+);
 
 	const chord = d3.chord()
 		.padAngle(0.05)
@@ -388,13 +392,32 @@ function updateChordDiagram(delays, temp) {
 		.style("cursor", "pointer")
 		.on("click", handleClick)
 		.on("mouseover", handleMouseOver)
-		.on("mouseout", hideTooltip);
-
-	groups.append("text")
-		.attr("x", 6)
-		.attr("dy", 15)
-		.append("textPath")
-		.attr("xlink:href", (d) => `#group-arc-${d.index}`)
+		.on("mouseout", hideTooltip);	
+	const labels = svg
+		.selectAll("g.label")
+		.data(chords.groups)
+		.enter()
+		.append("g")
+		.attr("class", "label")
+		.attr("transform", (d) => {
+			let angle = (d.startAngle + d.endAngle) / 2;
+			const radius = outerRadius + 9; // Adjust the radius for label placement
+			
+			if (d.index == 1 || d.index == 2){
+				return `translate(${radius * Math.cos(angle - Math.PI / 2)}, ${radius * Math.sin(angle - Math.PI / 2)}) rotate(${angle * (180 / Math.PI)}) rotate(180)`;
+			}
+			else{
+				return `translate(${radius * Math.cos(angle - Math.PI / 2)}, ${radius * Math.sin(angle - Math.PI / 2)}) rotate(${angle * (180 / Math.PI)})`;
+			}	
+			
+		});
+	
+	labels
+		.append("text")
+		.attr("dy", 6) // Adjust the vertical position
+		.attr("text-anchor", "middle")
+		.attr("class", "slanted-label")
+		.style("fill", (d) => regionColors[regions[d.index]]) // Set text fill color
 		.text((d) => regions[d.index]);
 
 		function handleClick(event, d) {
