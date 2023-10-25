@@ -499,7 +499,7 @@ function createChordDiagram(delays, temp) {
 		.attr("class", "label")
 		.attr("transform", (d) => {
 			let angle = (d.startAngle + d.endAngle) / 2;
-			const radius = outerRadius + 10; // Adjust the radius for label placement
+			const radius = outerRadius + 15; // Adjust the radius for label placement
 			
 			if (d.index == 1 || d.index == 2){
 				return `translate(${radius * Math.cos(angle - Math.PI / 2)}, ${radius * Math.sin(angle - Math.PI / 2)}) rotate(${angle * (180 / Math.PI)}) rotate(180)`;
@@ -512,10 +512,12 @@ function createChordDiagram(delays, temp) {
 	
 	labels
 		.append("text")
-		.attr("dy", 6) // Adjust the vertical position
+		.attr("dy", 8) // Adjust the vertical position
 		.attr("text-anchor", "middle")
 		.attr("class", "slanted-label")
 		.style("fill", (d) => regionColors[regions[d.index]]) // Set text fill color
+		.attr("stroke", (d) => regionColors[regions[d.index]]) // Set text fill color
+		.attr("font-weight",900)
 		.text((d) => regions[d.index]);
 
 	function handleClick(event, d) {
