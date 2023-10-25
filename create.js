@@ -133,8 +133,8 @@ function createStreamGraph(delays, temp) {
 		//.attr("y", function(d) { return y(d.avgTempC) })
 		.attr("width", (d) => (d.date === "2018-12-01" || d.date === "2018-12-31") ? x.bandwidth()/2 : x.bandwidth())
 		.attr("height", height )
-		.on("mouseover", showTooltip)
-		.on("mouseout", hideTooltip)
+		.on("mouseover", handleMouseOver)
+		.on("mouseout", handleMouseOut)
 
 	function calculateDelaySum(regionCode) {
 		//calculate the sum of delays for a given region
@@ -147,7 +147,7 @@ function createStreamGraph(delays, temp) {
 		.data(Object.keys(lineGenerators))
 		.enter()
 		.append("path")
-		.attr("class", "line")
+		.attr("class", "line data")
 		.attr("d", d => lineGenerators[d](delaysPerDate.filter(item => item.region === d)))
 		.style("stroke", d => regionColors[d])
 		.style("stroke-width", 5)
@@ -157,8 +157,8 @@ function createStreamGraph(delays, temp) {
 		.on("click", function(event, d) {
 			updateIdioms(d);
 		})
-		.on("mouseover", showTooltip)
-		.on("mouseout", hideTooltip)
+		.on("mouseover", handleMouseOver)
+		.on("mouseout", handleMouseOut)
 		.style("stroke-width", 5)
 		.style("fill", "none");
 
@@ -255,7 +255,7 @@ function createParallelCoords(delays, temp) {
 	
 	// Add grey background lines for context.
 	background = svg.append("g")
-		.attr("class", "background")
+		.attr("class", "background data")
 		.selectAll("path")
 		.data(formattedData, (d) => d.ORIGIN_AIRPORT)
 		.enter().append("path")
@@ -266,17 +266,17 @@ function createParallelCoords(delays, temp) {
 		.selectAll("path")
 		.data(formattedData, (d) => d.ORIGIN_AIRPORT)
 		.enter().append("path")
-		.attr("class", (d) => d.ORIGIN)
 		.attr("d", path)
+		.attr("class","data")
 		.style("stroke", (d) => regionColors[stateToRegion[d.ORIGIN_STATE]])
 		.style("stroke-width", 1)
 		.style("fill", "none")
 		.style("cursor", "pointer")
 		.style("pointer-events", "visible")
 		// .on("mouseover", handleMouseOver) // Functi
-		.on("mouseover", (event, d)=>{ showTooltip(event, d);})
+		.on("mouseover", (event, d)=>{ handleMouseOver(event, d);})
 		// .on("mouseover.second", (event, d)=>{ highlight(event, d)})
-		.on("mouseout", hideTooltip) // Function defined below
+		.on("mouseout", handleMouseOut) // Function defined below
 		// .on("mouseout.second", unhighlight)
 	// Add a group element for each dimension.
 	// console.log("dim: ",dimensions);
@@ -353,28 +353,6 @@ function createParallelCoords(delays, temp) {
 			.attr("x", -8)
 			.attr("width", 16);  
 
-	// TODO: Highlight the specie that is hovered
-	// function highlight (event, d){
-	// 	// console.log("highlight", d);
-	// 	// first every group turns grey
-	// 	d3.selectAll(".foreground")
-	// 	  .transition().duration(200)
-	// 	  .style("stroke", "lightgrey")
-	// 	  .style("opacity", "0.2");
-	// 	// Second the hovered specie takes its color
-	// 	d3.select("." + d.ORIGIN)
-	// 	  .transition().duration(200)
-	// 	  .style("stroke", regionColors[stateToRegion[d.ORIGIN_STATE]])
-	// 	  .style("opacity", "1");
-	//   }
-	// // Unhighlight
-	// function unhighlight(d){
-	// 	// console.log("unhighlight", d.ORIGIN);
-	// 	d3.selectAll(".foreground")
-	// 		.transition().duration(200).delay(10000)
-	// 		.style("stroke", (d) => regionColors[stateToRegion[d.ORIGIN_STATE]])
-	// 		.style("opacity", "1")
-	// }
 	// Returns the path for a given data point.
 	function path(d) {
 		return line(dimensions.map(function(p) { return [position(p), yParallel[p](d[p])]; }));
@@ -498,7 +476,7 @@ function createChordDiagram(delays, temp) {
         .style("cursor", "pointer")
 				.on("click", handleClick)
         .on("mouseover", handleMouseOver)
-        .on("mouseout", hideTooltip);
+        .on("mouseout", handleMouseOut);
 
     groups
         .append("text")
@@ -522,15 +500,16 @@ function createChordDiagram(delays, temp) {
 				.style("stroke-width", 3); 
 	}
 
-	function handleMouseOver(event, d) {
-			const tooltip = d3.select("#tooltip");
-			tooltip.transition().duration(200).style("opacity", 0.9);
-			tooltip.html(`Region: ${regions[d.index]}`);
-		}
+	// Function implemented in linked.js
+	// function handleMouseOver(event, d) {
+	// 		const tooltip = d3.select("#tooltip");
+	// 		tooltip.transition().duration(200).style("opacity", 0.9);
+	// 		tooltip.html(`Region: ${regions[d.index]}`);
+	// 	}
     svg.selectAll("path.chord")
         .data(chord(delaysMatrix))
         .enter().append("path")
-        .attr("class", "chord")
+        .attr("class", "chord data")
         .style("fill", function (d) {
             return `url(#chordGradient-${d.source.index}-${d.target.index})`;
         })
