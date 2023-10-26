@@ -11,7 +11,8 @@ function showTooltip(event, d){
 	else if(d.date)
 		document.getElementById("tooltip")
 			.innerHTML= "Date: " + d.date + "<br>" +
-				"Average Temperature: " + parseFloat(tempUnit == "C" ? d.avgTempC : d.avgTempF).toFixed(1) + "º" + tempUnit;
+				"Average Temperature: " + parseFloat(tempUnit == "C" ? d.avgTempC : d.avgTempF).toFixed(1) +
+				(tempUnit == "C" ? "º" : "") + tempUnit;
 	else if(globalRegions.find(v => v == d) != null)
 		document.getElementById("tooltip")
 			.innerHTML= "Region: " + d;

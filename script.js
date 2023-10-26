@@ -100,7 +100,6 @@ function updateTimeRange(range) {
 }
 
 function updateTempUnit(unit) {
-    const temperatureData = globalTemp;
     tempUnit = unit;
     var legend = [[20,1],[0,1],[-10,1]];
     var xLegend = d3.scaleBand()
