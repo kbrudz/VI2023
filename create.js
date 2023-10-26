@@ -134,13 +134,6 @@ function createStreamGraph(delays, temp) {
 		.attr("height", height )
 		.on("mouseover", handleMouseOver)
 		.on("mouseout", handleMouseOut)
-
-	function calculateDelaySum(regionCode) {
-		//calculate the sum of delays for a given region
-		const delaysForRegion = delaysPerDate.filter(item => item.region === regionCode);
-		const sum = d3.sum(delaysForRegion, d => d.delay);
-		return sum;
-	}
 	
 	const lines = svg.selectAll(".line")
 		.data(Object.keys(lineGenerators))
@@ -239,14 +232,14 @@ function createParallelCoords(delays, temp) {
 
 	extents = dimensions.map(function(p) { return [0,0]; });
 
-	var x = d3.scalePoint().rangeRound([0, width]).padding(1).domain(dimensions),
-		line = d3.line(),
+	const x = d3.scalePoint().rangeRound([0, width]).padding(1).domain(dimensions);
+	let	line = d3.line(),
 		dragging = {},
 		origDimensions = dimensions.slice(0)
 		background,
 		foreground;
 
-	var svg = d3.select("#parallelCoords").append("svg")
+	const svg = d3.select("#parallelCoords").append("svg")
 		.attr("width", width + margin.left + margin.right)
 		.attr("height", height + margin.top + margin.bottom)
 	  	.append("g")
@@ -282,7 +275,8 @@ function createParallelCoords(delays, temp) {
 		// .on("mouseout.second", unhighlight)
 	// Add a group element for each dimension.
 	// console.log("dim: ",dimensions);
-	var g = svg.selectAll(".dimension")
+
+	let g = svg.selectAll(".dimension")
 		.data(dimensions)
 		.enter().append("g")
 		.attr("class", "dimension")
@@ -318,7 +312,8 @@ function createParallelCoords(delays, temp) {
 					  origDimensions = dimensions.slice(0);
 			}));
 		// Add an axis and title.
-		var g = svg.selectAll(".dimension");
+		g = svg.selectAll(".dimension");
+		
 		g.append("g")
 			.attr("class", "axis")
 			.each(function(d) {  
@@ -328,20 +323,20 @@ function createParallelCoords(delays, temp) {
 					d3.select(this).call(d3.axisLeft(yParallel[d]).tickFormat(d3.format(".0%")));
 				else {d3.select(this).call(d3.axisLeft(yParallel[d]).tickFormat(d3.format(".2s")));}
 			})
-			//text does not show up because previous line breaks somehow
-			.append("text")
-			.attr("fill", "black")
-			.style("text-anchor", "middle")
-			.attr("y", -9) 
-			.style("cursor", "grab")
-			.text(function(d) { return d; });
+				//text does not show up because previous line breaks somehow
+				.append("text")
+				.attr("fill", "black")
+				.style("text-anchor", "middle")
+				.attr("y", -9) 
+				.style("cursor", "grab")
+				.text(function(d) { return d; });
 
 		// Add and store a brush for each axis.
 		g.append("g")
 			.attr("class", "brush")
 			.each(function(d) {
 				// console.log("brush?: ", y[d].name);
-				if(yParallel[d].name == 'scale'){
+				if(yParallel[d].name === 'scale'){
 				// console.log(this);
 				d3.select(this)
 					.call(yParallel[d].brush = d3.brushY()
@@ -353,7 +348,7 @@ function createParallelCoords(delays, temp) {
 			})
 			.selectAll("rect")
 			.attr("x", -8)
-			.attr("width", 16);  
+			.attr("width", 16);
 
 	// Returns the path for a given data point.
 	function path(d) {
@@ -372,6 +367,7 @@ function createParallelCoords(delays, temp) {
 	function brushstart(event) {
 		event.sourceEvent.stopPropagation();  
 	}
+
 	function brushing(event) {
 		for(var i=0;i<dimensions.length;++i){
 			if(event.target==yParallel[dimensions[i]].brush) {
@@ -389,8 +385,9 @@ function createParallelCoords(delays, temp) {
 		}); 
 		console.log("extents",extents);
 	}
+	
 	function brushend(event) {
-		if (event.defaultPrevented) return; // click suppressed
+		if(event.defaultPrevented) return; // click suppressed
 	}
 }
 function createChordDiagram(delays, temp) {
@@ -471,7 +468,7 @@ function createChordDiagram(delays, temp) {
 
     groups
         .append("path")
-		.attr("class", "data")
+				.attr("class", "data")
         .style("fill", (d) => regionColors[globalRegions[d.index]])
         .style("stroke", (d) => regionColors[globalRegions[d.index]])
         .attr("d", arc)

@@ -2,7 +2,8 @@
 let globalDelays, globalTemp;
 
 const globalRegions = ["west", "south", "midwest", "northeast"];
-let selectedRegions = [...globalRegions];
+let activeRegions = [...globalRegions];
+let timeRange = [1, 31];
 
 // // Define margins for the visualizations. 
 // const margin = {top: 30, right: 10, bottom: 10, left: 0};
@@ -52,32 +53,50 @@ function startDashboard() {
 }
 
 // This function updates the visualizations based on the selected data type.
-function updateIdioms(data) {
-    // console.log(data);
-    // if (data != "all"){
-    //     updateParallel(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === data));
-    //     updateStream(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === data), globalTemp.filter((d) => stateToRegion[d.iso_region] === data));
-    //     updateChordDiagram(globalDelays.filter((d) => stateToRegion[d.ORIGIN_STATE] === data || stateToRegion[d.DEST_STATE] === data));
-    // }else{
-    //     updateParallel(globalDelays);
-    //     updateStream(globalDelays, globalTemp);
-    //     updateChordDiagram(globalDelays);
+function updateIdioms(data = 'none') {
     if(data === 'all') {
-        selectedRegions = [...globalRegions];
-    } else {
-        if(globalRegions.every(d => selectedRegions.includes(d)))
-            selectedRegions = [data];
-        else if(selectedRegions.includes(data)) {
-            selectedRegions.splice(selectedRegions.findIndex(d => d == data), 1);
-            if(selectedRegions.length === 0) {console.log("emptied");selectedRegions = [...globalRegions];}
-        } else selectedRegions.push(data);
+        // all regions become active
+        activeRegions = [...globalRegions];
+    } else if(data !== 'none') {
+        // if all regions are active
+        if(globalRegions.every(d => activeRegions.includes(d)))
+            // the only active region becomes the selected
+            activeRegions = [data];
+        // if the selected region is already active
+        else if(activeRegions.includes(data)) {
+            // deselect region
+            activeRegions.splice(activeRegions.findIndex(d => d == data), 1);
+            // if no region is active -> select all regions
+            if(activeRegions.length === 0) activeRegions = [...globalRegions];
+        // if the region is not yet active
+        } else activeRegions.push(data);
     }
-    
-    console.log(selectedRegions);
 
-    updateParallel(globalDelays.filter((d) => selectedRegions.includes(stateToRegion[d.ORIGIN_STATE])));
-    updateStream(globalDelays.filter((d) => selectedRegions.includes(stateToRegion[d.ORIGIN_STATE])), globalTemp.filter((d) => selectedRegions.includes(stateToRegion[d.iso_region])));
-    updateChordDiagram(globalDelays.filter((d) => selectedRegions.includes(stateToRegion[d.ORIGIN_STATE]) || selectedRegions.includes(stateToRegion[d.DEST_STATE])));
+    updateParallel(globalDelays.filter((d) => 
+        activeRegions.includes(stateToRegion[d.ORIGIN_STATE])
+    ));
+    
+    updateStream(globalDelays.filter((d) => 
+        activeRegions.includes(stateToRegion[d.ORIGIN_STATE])
+    ), globalTemp.filter((d) => 
+        activeRegions.includes(stateToRegion[d.iso_region])
+    ));
+
+    updateChordDiagram(globalDelays.filter((d) => 
+        activeRegions.includes(stateToRegion[d.ORIGIN_STATE]) ||
+        activeRegions.includes(stateToRegion[d.DEST_STATE])
+    ));
+}
+
+function updateTimeRange(range) {
+    updateParallel(globalDelays.filter((d) => 
+        activeRegions.includes(stateToRegion[d.ORIGIN_STATE]) &&
+        (timeRange[0] <= +d.FL_DATE.slice(-2) <= timeRange[1])
+    ));
+    updateChordDiagram(globalDelays.filter((d) => 
+        (activeRegions.includes(stateToRegion[d.ORIGIN_STATE]) || activeRegions.includes(stateToRegion[d.DEST_STATE])) &&
+        (timeRange[0] <= +d.FL_DATE.slice(-2) <= timeRange[1])
+    ));
 }
 
 function updateTempUnit(unit) {
@@ -92,7 +111,7 @@ function updateTempUnit(unit) {
     // console.log(svgLegend);
     //create domain for color scale for Fahrenheit 	.range(["#00008B", "#ffffff", "#8B0000"]) .domain([15,35,55])
     let tickLabelsC = ["20ºC", "0ºC", "-10ºC"];
-    let tickLabelsF = ["68F", "32F", "14FºC"];
+    let tickLabelsF = ["68ºF", "32ºF", "14ºF"];
     if (unit == "C")
 	    svgLegend.call(d3.axisBottom(xLegend).ticks(3).tickFormat((d,i) => tickLabelsC[i]))
     else if (unit == "F")
