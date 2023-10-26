@@ -150,14 +150,7 @@ function updateParallel(data) {
 		
 		}
 	})
-	// foreground.style("display", function(d) {
-	// 	return dimensions.every(function(p, i) {
-	// 		if(extents[i][0]==0 && extents[i][0]==0) {
-	// 			return true;
-	// 		}
-	// 	return extents[i][1] <= d[p] && d[p] <= extents[i][0];
-	// 	}) ? null : "none";
-	// }); 
+	
 	//-----------------------------------------
 	
 	// yParallelInverted = {};
@@ -303,6 +296,17 @@ function updateParallel(data) {
 
 	background.exit().transition().duration(100).attr("width", 0).remove();
 	foreground.exit().transition().duration(100).attr("width", 0).remove();
+
+
+
+	foreground.style("display", function(d) {
+		return dimensions.every(function(p, i) {
+			if(extents[i][0]==0 && extents[i][0]==0) {
+				return true;
+			}
+		return extents[i][1] <= d[p] && d[p] <= extents[i][0];
+		}) ? null : "none";
+	}); 
 }
   
 // Function to update the graph with new data

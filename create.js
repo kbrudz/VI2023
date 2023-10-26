@@ -470,7 +470,7 @@ function createChordDiagram(delays, temp) {
         .style("stroke", (d) => regionColors[globalRegions[d.index]])
         .attr("d", arc)
         .style("cursor", "pointer")
-				.on("click", handleClick)
+				.on("click", (d) => updateIdioms(globalRegions[d.index]))
         .on("mouseover", handleMouseOver)
         .on("mouseout", handleMouseOut);
 
@@ -510,21 +510,6 @@ function createChordDiagram(delays, temp) {
 		.attr("stroke", (d) => regionColors[globalRegions[d.index]]) // Set text fill color
 		.attr("font-weight",900)
 		.text((d) => globalRegions[d.index]);
-
-	function handleClick(event, d) {
-		updateIdioms(globalRegions[d.index]);
-		/*
-		const groups = svg.selectAll("g.group");
-		groups.select("path")
-			.style("stroke", (d) => regionColors[regions[d.index]])
-			.style("stroke-width", null);
-	
-		const selectedGroup = groups.filter((groupData) => groupData.index === d.index);
-		selectedGroup.select("path")
-			.style("stroke", "#fbfe88")  
-			.style("stroke-width", 3); 
-		*/
-	}
 
 	// Function implemented in linked.js
 	// function handleMouseOver(event, d) {
