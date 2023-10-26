@@ -622,12 +622,12 @@ function createLegend(){
 	var legend = [[20,1],[0,1],[-10,1]];
 	const widthLegend = 20;
 	const heightLegend = 100;
-	let svgLegend = d3.select("#streamGraph")
+	let svgLegend = d3.select("#legend")
 		.append("svg")
 		.attr("width", widthLegend + margin.left )
-		.attr("height", height + margin.top + margin.bottom)
+		.attr("height", heightLegend + margin.top + margin.bottom)
 		.append("g")
-		.attr("transform", "translate(" + widthLegend + "," + margin.top+ ") rotate(90)");
+		.attr("transform", "translate(" + widthLegend + "," + margin.top + ") rotate(90)");
 	var xLegend = d3.scaleBand()
 		.range([ 0, heightLegend ])
 		.domain(legend.map(d => d[0]))
@@ -657,4 +657,27 @@ function createLegend(){
 		.attr("fill", d => tempColorScale(d[0]))
 		.attr('stroke-width', 1)
 		.attr('stroke', d => d3.rgb(tempColorScale(d[0])).darker(1))
+
+	// Create data = list of groups
+	var allGroup = ["Celsius", "Fahrenheit"]
+	// Initialize the button
+	var dropdownButton = d3.select("#selectButton")
+		.append('select')
+		.attr("transform", "translate(-" + 1000 + "," + 0+ ") rotate(90)");
+	// add the options to the button
+	dropdownButton // Add a button
+		.selectAll('myOptions') // Next 4 lines add 6 options = 6 colors
+		.data(allGroup)
+		.enter()
+		.append('option')
+		.text(function (d) { return d; }) // text showed in the menu
+		.attr("value", function (d) { return d; }) // corresponding value returned by the button
+	// When the button is changed, run the updateChart function
+	dropdownButton.on("change", function(d) {
+		const unit = {"Celsius":"C", "Fahrenheit":"F"}
+		// recover the option that has been chosen
+		var selectedOption = d3.select(this).property("value")
+		// run the updateChart function with this selected option
+		updateTempUnit(unit[selectedOption]);
+	})
 }

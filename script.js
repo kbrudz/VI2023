@@ -81,7 +81,6 @@ function updateIdioms(data) {
 }
 
 function updateTempUnit(unit) {
-    const temperatureData = globalTemp;
     tempUnit = unit;
     var legend = [[20,1],[0,1],[-10,1]];
     var xLegend = d3.scaleBand()
@@ -92,7 +91,7 @@ function updateTempUnit(unit) {
     // console.log(svgLegend);
     //create domain for color scale for Fahrenheit 	.range(["#00008B", "#ffffff", "#8B0000"]) .domain([15,35,55])
     let tickLabelsC = ["20ºC", "0ºC", "-10ºC"];
-    let tickLabelsF = ["68F", "32F", "14FºC"];
+    let tickLabelsF = ["68F", "32F", "14F"];
     if (unit == "C")
 	    svgLegend.call(d3.axisBottom(xLegend).ticks(3).tickFormat((d,i) => tickLabelsC[i]))
     else if (unit == "F")
