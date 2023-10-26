@@ -1,12 +1,12 @@
 //exploring interactivity for parallel coords
-var dragging = {},
-    foreground,
-    background,
-    highlighted,
-    dimensions,                           
-    legend,
-    brush_count = 0,
-    excluded_groups = [],
+let dragging = {},
+  foreground,
+  background,
+  highlighted,
+  dimensions,                           
+  legend,
+  brush_count = 0,
+  excluded_groups = [],
 	extents, tempUnit = "C";
 
 const stateToRegion = {
@@ -234,7 +234,6 @@ function createParallelCoords(delays, temp) {
 
 	const x = d3.scalePoint().rangeRound([0, width]).padding(1).domain(dimensions);
 	let	line = d3.line(),
-		dragging = {},
 		origDimensions = dimensions.slice(0)
 		background,
 		foreground;
@@ -253,9 +252,6 @@ function createParallelCoords(delays, temp) {
 		.enter().append("path")
 		.attr("d", path);
 	// Add blue foreground lines for focus.
-
-	const wScale = d3.scaleOrdinal().domain(["small_airport", "medium_airport", "large_airport"]).range([1,2,]);
-
 	foreground = svg.append("g")
 		.attr("class", "foreground")
 		.selectAll("path")
@@ -264,7 +260,7 @@ function createParallelCoords(delays, temp) {
 		.attr("d", path)
 		.attr("class","data")
 		.style("stroke", (d) => regionColors[stateToRegion[d.ORIGIN_STATE]])
-		.style("stroke-width", (d) => wScale(d.ORIGIN_TYPE))
+		.style("stroke-width", 1)
 		.style("fill", "none")
 		.style("cursor", "pointer")
 		.style("pointer-events", "visible")
@@ -390,6 +386,7 @@ function createParallelCoords(delays, temp) {
 		if(event.defaultPrevented) return; // click suppressed
 	}
 }
+
 function createChordDiagram(delays, temp) {
 
 	//#TO DO Add airport names!!

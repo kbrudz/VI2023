@@ -41,8 +41,7 @@ function updateParallel(data) {
 	});
 
 	const x = d3.scalePoint().rangeRound([0, width]).padding(1).domain(dimensions);
-	const wScale = d3.scaleOrdinal().domain(["small_airport", "medium_airport", "large_airport"]).range([1,2,4]);	
-
+	
 	let line = d3.line(),
 		dragging = {},
 		origDimensions = dimensions.slice(0);
@@ -61,7 +60,7 @@ function updateParallel(data) {
 		.duration(1000)
 		.attr("d", path)
 		.style("stroke", (d) => regionColors[stateToRegion[d.ORIGIN_STATE]])
-		.style("stroke-width", (d) => wScale(d.ORIGIN_TYPE))
+		.style("stroke-width", 1)
 		.style("fill", "none");
 
 	// Add new bars for any new data points and transition them to their correct position and width

@@ -1,29 +1,28 @@
-function showTooltip(event, d){
+function showTooltip(event, d) {
 	d3.select('#tooltip')
 		.transition()
 		.style("opacity", 1)
 
 	if(d.ORIGIN_AIRPORT)
 		document.getElementById("tooltip")
-			.innerHTML= "Airport: " + d.ORIGIN_AIRPORT + "<br>" +
-				"Region: " + stateToRegion[d.ORIGIN_STATE] +"<br>" +
+			.innerHTML = "Airport: " + d.ORIGIN_AIRPORT + "<br>" +
+				"Region: " + stateToRegion[d.ORIGIN_STATE] + "<br>" +
 				"Delay: " + d.ARR_DELAY_SUM;
 	else if(d.date)
 		document.getElementById("tooltip")
-			.innerHTML= "Date: " + d.date + "<br>" +
-				"Average Temperature: " + parseFloat(tempUnit == "C" ? d.avgTempC : d.avgTempF).toFixed(1) +
-				(tempUnit == "C" ? "º" : "") + tempUnit;
+			.innerHTML = "Date: " + d.date + "<br>" +
+				"Average Temperature: " + parseFloat(tempUnit == "C" ? d.avgTempC : d.avgTempF).toFixed(1) + "º" + tempUnit;
 	else if(globalRegions.find(v => v == d) != null)
 		document.getElementById("tooltip")
-			.innerHTML= "Region: " + d;
+			.innerHTML = "Region: " + d;
 	else if (d.index != null)
 		document.getElementById("tooltip")
-			.innerHTML= "Region: " + globalRegions[d.index];
+			.innerHTML = "Region: " + globalRegions[d.index];
 }
 
 function hideTooltip(d){
 	d3.select('#tooltip')
-    .transition().duration(250)
+    .transition().duration(200)
 		.style("opacity", 0)
 }
   
