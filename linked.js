@@ -5,13 +5,14 @@ function showTooltip(event, d) {
 
 	if(d.ORIGIN_AIRPORT)
 		document.getElementById("tooltip")
-			.innerHTML = "Airport: " + d.ORIGIN_AIRPORT + "<br>" +
-				"Region: " + stateToRegion[d.ORIGIN_STATE] + "<br>" +
-				"Delay: " + d.ARR_DELAY_SUM;
+			.innerHTML= "Airport: " + d.ORIGIN_AIRPORT + "<br>" +
+				"Region: " + stateToRegion[d.ORIGIN_STATE] +"<br>" +
+				"Delay: " + d.AvgDepartureDelayMinutes;
 	else if(d.date)
 		document.getElementById("tooltip")
-			.innerHTML = "Date: " + d.date + "<br>" +
-				"Average Temperature: " + parseFloat(tempUnit == "C" ? d.avgTempC : d.avgTempF).toFixed(1) + "º" + tempUnit;
+			.innerHTML= "Date: " + d.date + "<br>" +
+				"Average Temperature: " + parseFloat(tempUnit == "C" ? d.avgTempC : d.avgTempF).toFixed(1) +
+				"º" + tempUnit;
 	else if(globalRegions.find(v => v == d) != null)
 		document.getElementById("tooltip")
 			.innerHTML = "Region: " + d;
@@ -56,13 +57,15 @@ function handleMouseOver(event, item) {
 	d3.selectAll(".data").attr("opacity", 0.1);
 	d3.selectAll("path.chord").attr("opacity", 0.08);
 
+	// console.log("processing",item);
 	let selected;
 	if (globalRegions.includes(item))
 		selected = item;
 	else if(item.index !== undefined)
 		selected = globalRegions[item.index];
-	else if(item.ORIGIN_AIRPORT !== null)
-		selected = stateToRegion[item.ORIGIN_STATE];
+	else if(item.ORIGIN_AIRPORT !== null){
+		// console.log(stateToRegion[item.ORIGIN_STATE])
+		selected = stateToRegion[item.ORIGIN_STATE];}
 
 	d3.selectAll(".data")
 		.filter((d) => {

@@ -1,5 +1,6 @@
 // Function to update the bar chart with new data
 function updateParallel(data) {
+	console.log("extents before update", extents);
     // width = 1200 - margin.left - margin.right;
 	const width = widthParallel;
     // Select the SVG element of the bar chart
@@ -8,8 +9,8 @@ function updateParallel(data) {
 	const aggregatedData = d3.rollup(
 		data,
 		group => ({
-			AvgDepartureDelayMinutes: d3.sum(group, d => d.DEP_DELAY),
-			AvgArrivalDelayMinutes: d3.sum(group, d => d.ARR_DELAY),
+			AvgDepartureDelayMinutes: d3.mean(group, d => d.DEP_DELAY),
+			AvgArrivalDelayMinutes: d3.mean(group, d => d.ARR_DELAY),
 			CancelledFlights: d3.mean(group, d => d.CANCELLED),
 			DivertedFlights: d3.mean(group, d => d.DIVERTED),
 			ORIGIN_TYPE: group[0].ORIGIN_TYPE, // Assuming it's the same for all entries of the same airport
@@ -49,7 +50,7 @@ function updateParallel(data) {
 	// Select all existing bars and bind the data to them
 	background = svg.selectAll(".background").selectAll("path").data(formattedData, (d) => d.ORIGIN_AIRPORT);
 	foreground = svg.selectAll(".foreground").selectAll("path").data(formattedData, (d) => d.ORIGIN_AIRPORT);
-
+	console.log("formatted data",formattedData);
 	// Update existing bars with transitions for position, width, height, and color
 	background
 		.transition()
@@ -134,7 +135,30 @@ function updateParallel(data) {
 		else {d3.select(this).call(d3.axisLeft(yParallel[d]).tickFormat(d3.format(".2s")));}
 	});
 	// svg.selectAll(".brush").remove()
-	var i = 0;
+	//--------------------------------------------------------
+	d3.selectAll(".brush").each(function(d) {
+		// console.log("brush?: ", y[d].name);
+		if(yParallel[d].name == 'scale'){
+		// console.log(this);
+		d3.select(this)
+			.call(yParallel[d].brush = d3.brushY()
+				.extent([[-8, 0], [8,height]])
+				.on("start", brushstart)
+				.on("brush", brushing))
+				.on("end", brushend);
+		d3.select(this).select(".selection").style("display", "none");
+		
+		}
+	})
+	// foreground.style("display", function(d) {
+	// 	return dimensions.every(function(p, i) {
+	// 		if(extents[i][0]==0 && extents[i][0]==0) {
+	// 			return true;
+	// 		}
+	// 	return extents[i][1] <= d[p] && d[p] <= extents[i][0];
+	// 	}) ? null : "none";
+	// }); 
+	//-----------------------------------------
 	
 	// yParallelInverted = {};
 	// dimensions.forEach(dim => {
@@ -148,39 +172,41 @@ function updateParallel(data) {
 	// });
 
 	// TODO FIX brush
-	// var new_extents = [], y0, y1;
-	// new_extents = dimensions.map(function(p) { return [0,0]; });
-	// for (var i = 0; i<new_extents.length; i++){
-	// 	if (extents[i][0] == 0 && extents[i][1] == 0){
-	// 		continue;
-	// 	}
-	// 	else{
-	// 		y0 = yParallel[dimensions[i]](extents[i][1]);
-	// 		y1 = yParallel[dimensions[i]](extents[i][0]);
-	// 		new_extents[i][1] = (y0 - y1)/2;//height
-	// 		new_extents[i][0] = y1+new_extents[i][1];
-	// 		console.log("y0", y0, "y1", y1);
-	// 	}
+	var new_extents = [], y0, y1;
+	new_extents = dimensions.map(function(p) { return [0,0]; });
+	for (var i = 0; i<new_extents.length; i++){
+		if (extents[i][0] == 0 && extents[i][1] == 0){
+			continue;
+		}
+		else{
+			y0 = yParallel[dimensions[i]](extents[i][1]);
+			y1 = yParallel[dimensions[i]](extents[i][0]);
+			new_extents[i][1] = (y0 - y1);//height
+			new_extents[i][0] = y1+((y0 - y1)/2);
+			console.log("y0", y0, "y1", y1, "old extents",extents[i],"new_extents", new_extents[i]);
+		}
+	}
 	// }
 	// for(var i=0;i<dimensions.length;++i){
 	// 	console.log("yPar",yParallel[dimensions[i]], "\ninvert",yParallel[dimensions[i]].invert);
 	// 	// extents[i]=d3.selectAll(".dimension").map(yParallel[dimensions[i]].invert,yParallel[dimensions[i]]);
 	// }
 	// console.log("new extents fds",new_extents);
-	// var i = -1;
-	// d3.selectAll(".dimension")
-	// 	.select(".brush")
-	// 	.select(".selection")
-	// 	.attr("y", d => {i++; return new_extents[i][0];})
-	// 	.attr("height", d => {return new_extents[i][1];});
+	var i = -1;
+	d3.selectAll(".dimension")
+		.selectAll(".brush")
+		.selectAll(".selection")
+		.style("display","")
+		.attr("y", d => {console.log(d);i++; return new_extents[i][0];})
+		.attr("height", new_extents[i][1]);
 
 	
 	function path(d) {
 		return line(dimensions.map(function(p) { return [position(p), yParallel[p](d[p])]; }));
 	}
-	// function emptyPath(d) {
-	//     return d3.line()(axes.map(function(p) { return [0, 0]; }));
-	// }
+	function emptyPath(d) {
+	    return d3.line()(axes.map(function(p) { return [0, 0]; }));
+	}
 	function position(d) {
 		var v = dragging[d];
 		return v == null ? x(d) : v;
@@ -205,12 +231,150 @@ function updateParallel(data) {
 				if(extents[i][0]==0 && extents[i][0]==0) {
 					return true;
 				}
-			return extents[i][1] <= d[p] && d[p] <= extents[i][0];
+				return extents[i][1] <= d[p] && d[p] <= extents[i][0];
 			}) ? null : "none";
 		}); 
 	}
 	function brushend(event) {
 		if (event.defaultPrevented) return; // click suppressed
+	}
+
+	// Insert empty line to fix bug
+	var empty = {"AIRPORT_ELEVATION": 0,"AvgArrivalDelayMinutes":0, "AvgDepartureDelayMinutes":0,
+		"CancelledFlights": 0,"DivertedFlights":0, "ORIGIN":0,
+		"ORIGIN_AIRPORT": "","ORIGIN_STATE":0, "ORIGIN_TYPE":0
+	}
+	formattedData.push(empty);
+	background = svg.selectAll(".background").selectAll("path").data(formattedData, (d) => d.ORIGIN_AIRPORT);
+	foreground = svg.selectAll(".foreground").selectAll("path").data(formattedData, (d) => d.ORIGIN_AIRPORT);
+	// console.log("new formatted data",formattedData);
+	
+	background
+		.transition()
+		.duration(1000)
+		.attr("d", path);
+	foreground
+		.transition()
+		.duration(1000)
+		.attr("d", path)
+		.style("stroke", (d) => {
+			if (d.ORIGIN_AIRPORT != "") 
+				return regionColors[stateToRegion[d.ORIGIN_STATE]];
+			})
+		.style("stroke-width", (d) => {
+			if (d.ORIGIN_AIRPORT != "") 
+				return 1;
+			else return 0;
+			})
+		.style("fill", "none");
+
+	background
+		.enter()
+		.append("path")
+		.attr("class", (d) => d.ORIGIN)
+		.attr("d", path)
+		.transition()
+		.duration(4000);
+	foreground
+		.enter()
+		.append("path")
+		.attr("class", (d) => d.ORIGIN)
+		.attr("d", (d)=> {if (d.ORIGIN_AIRPORT!= "") return path;})
+		.attr("class","data")
+		.style("stroke", (d) => {
+			if (d.ORIGIN_AIRPORT != "") 
+				return regionColors[stateToRegion[d.ORIGIN_STATE]];
+			})
+		.style("stroke-width", (d) => {
+			if (d.ORIGIN_AIRPORT != "") 
+				return 1;
+			else return 0;
+			})
+		.style("fill", "none")
+		.style("cursor", "pointer")
+		.style("pointer-events", "visible")
+		// .on("mouseover", handleMouseOver) // Functi
+		.on("mouseover", (event, d)=>{ showTooltip(event, d);})
+		// .on("mouseover.second", (event, d)=>{ highlight(event, d)})
+		.on("mouseout", hideTooltip) // Function defined below
+		// .on("mouseout.second", unhighlight)
+		.transition()
+		.duration(4000);
+
+	background.exit().transition().duration(100).attr("width", 0).remove();
+	foreground.exit().transition().duration(100).attr("width", 0).remove();
+}
+
+function insertEmptyLine(data, svg){
+	// var empty = {"AIRPORT_ELEVATION": 0,"AvgArrivalDelayMinutes":0, "AvgDepartureDelayMinutes":0,
+	// 	"CancelledFlights": 0,"DivertedFlights":0, "ORIGIN":0,
+	// 	"ORIGIN_AIRPORT": "","ORIGIN_STATE":0, "ORIGIN_TYPE":0
+	// }
+	// data.push(empty);
+	// // Select all existing bars and bind the data to them
+	// background = svg.selectAll(".background").selectAll("path").data(data, (d) => d.ORIGIN_AIRPORT);
+	// foreground = svg.selectAll(".foreground").selectAll("path").data(data, (d) => d.ORIGIN_AIRPORT);
+	// console.log("formatted data",data);
+	// // Update existing bars with transitions for position, width, height, and color
+	// background
+	// 	.transition()
+	// 	.duration(1000)
+	// 	.attr("d", path);
+	// foreground
+	// 	.transition()
+	// 	.duration(1000)
+	// 	.attr("d", path)
+	// 	.style("stroke", (d) => {
+	// 		if (d.ORIGIN_AIRPORT != "") 
+	// 			return regionColors[stateToRegion[d.ORIGIN_STATE]];
+	// 		})
+	// 	.style("stroke-width", (d) => {
+	// 		if (d.ORIGIN_AIRPORT != "") 
+	// 			return 1;
+	// 		else return 0;
+	// 		})
+	// 	.style("fill", "none");
+
+	// // Add new bars for any new data points and transition them to their correct position and width
+	// background
+	// 	.enter()
+	// 	.append("path")
+	// 	.attr("class", (d) => d.ORIGIN)
+	// 	.attr("d", path)
+	// 	.transition()
+	// 	.duration(4000);
+	// foreground
+	// 	.enter()
+	// 	.append("path")
+	// 	.attr("class", (d) => d.ORIGIN)
+	// 	.attr("d", (d)=> {if (d.ORIGIN_AIRPORT!= "") return path;})
+	// 	.attr("class","data")
+	// 	.style("stroke", (d) => {
+	// 		if (d.ORIGIN_AIRPORT != "") 
+	// 			return regionColors[stateToRegion[d.ORIGIN_STATE]];
+	// 		})
+	// 	.style("stroke-width", (d) => {
+	// 		if (d.ORIGIN_AIRPORT != "") 
+	// 			return 1;
+	// 		else return 0;
+	// 		})
+	// 	.style("fill", "none")
+	// 	.style("cursor", "pointer")
+	// 	.style("pointer-events", "visible")
+	// 	// .on("mouseover", handleMouseOver) // Functi
+	// 	.on("mouseover", (event, d)=>{ showTooltip(event, d);})
+	// 	// .on("mouseover.second", (event, d)=>{ highlight(event, d)})
+	// 	.on("mouseout", hideTooltip) // Function defined below
+	// 	// .on("mouseout.second", unhighlight)
+	// 	.transition()
+	// 	.duration(4000);
+
+	// // Remove any bars that are no longer in the updated data
+	// background.exit().transition().duration(100).attr("width", 0).remove();
+	// foreground.exit().transition().duration(100).attr("width", 0).remove();
+	
+	function path(d) {
+		return line(dimensions.map(function(p) { return [position(p), yParallel[p](d[p])]; }));
 	}
 }
   
@@ -416,7 +580,7 @@ function updateChordDiagram(delays, temp) {
 		.attr("text-anchor", "middle")
 		.attr("class", "slanted-label")
 		.style("fill", (d) => regionColors[globalRegions[d.index]]) // Set text fill color
-		.attr("stroke", (d) => regionColors[globalRegions[d.index]]) // Set text fill color
+		// .attr("stroke", (d) => regionColors[globalRegions[d.index]]) // Set text fill color
 		.attr("font-weight",900)
 		.text((d) => globalRegions[d.index]);
 
