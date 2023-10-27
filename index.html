@@ -36,6 +36,34 @@
 				shape-rendering: crispEdges;
 			}
 
+			#legendContainer {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+			}
+
+			.tempButton {
+				padding: 1px 10px;
+				font-size: 12px;
+				cursor: pointer;
+				border-radius: 13px;
+				background-color: #FFFFFF;
+			}
+
+			.tempButton:hover {
+				background-color: #EEEEEE;
+			}
+
+			.selectedTempButton {
+				background-color: #CCCCCC;
+				cursor: default;
+			}
+
+			.selectedTempButton:hover {
+				background-color: #CCCCCC;
+			}
+
 			#tooltip {
 				font: 12px sans-serif;
 				opacity: 0;
@@ -134,8 +162,11 @@
 			<!-- Visualization area for the stream graph -->
 			<div class="box" id="streamGraph" style="min-width:600px;"></div>
 			<div id="legendContainer" style="margin: 0px 25px 5px 5px;">
+				<div id="tempButtons">
+					<button id="tempButtonC" class="tempButton selectedTempButton" onclick="updateTempUnit('C')">C</button>
+					<button id="tempButtonF" class="tempButton" onclick="updateTempUnit('F')">F</button>
+				</div>
 				<div id="legend"></div>
-				<div id="selectButton"></div>
 			</div>
     </div>
 		<div class="bottom-row"> 

@@ -101,8 +101,8 @@ function updateTimeRange(range) {
 
 function updateTempUnit(unit) {
     tempUnit = unit;
-    var legend = [[20,1],[0,1],[-10,1]];
-    var xLegend = d3.scaleBand()
+    const legend = [[20,1],[0,1],[-10,1]];
+    const xLegend = d3.scaleBand()
         .range([ 0, 100 ])
         .domain(legend.map(d => d[0]))
         .padding(0.2);
@@ -111,10 +111,15 @@ function updateTempUnit(unit) {
     //create domain for color scale for Fahrenheit 	.range(["#00008B", "#ffffff", "#8B0000"]) .domain([15,35,55])
     let tickLabelsC = ["20ºC", "0ºC", "-10ºC"];
     let tickLabelsF = ["68ºF", "32ºF", "14ºF"];
-    if (unit == "C")
-	    svgLegend.call(d3.axisBottom(xLegend).ticks(3).tickFormat((d,i) => tickLabelsC[i]))
-    else if (unit == "F")
+    if (unit == "C") {
+        svgLegend.call(d3.axisBottom(xLegend).ticks(3).tickFormat((d,i) => tickLabelsC[i]))
+        d3.select('#tempButtonC').classed('selectedTempButton', true);
+        d3.select('#tempButtonF').classed('selectedTempButton', false);
+    } else if (unit == "F") {
 	    svgLegend.call(d3.axisBottom(xLegend).ticks(3).tickFormat((d,i) => tickLabelsF[i]))
+        d3.select('#tempButtonF').classed('selectedTempButton', true);
+        d3.select('#tempButtonC').classed('selectedTempButton', false);
+    }
 }
 
 

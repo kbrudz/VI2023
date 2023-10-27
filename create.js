@@ -3,8 +3,7 @@ let dragging = {},
   foreground,
   background,
   highlighted,
-  dimensions,                           
-  legend,
+  dimensions,
   brush_count = 0,
   excluded_groups = [],
 	extents, tempUnit = "C";
@@ -612,7 +611,61 @@ function createChordDiagram(delays, temp) {
 // 		.attr("dy", "0.35em")
 // 		.text(d => {console.log("adding text labels",d); return d.data.code});
 // }
-function createLegend(){
+function createLegend() {
+	/*// Create a legend for the heatmap
+  const svg2 = d3
+    .select("#legend")
+    .append("svg")
+    .attr("width", width * 0.2)
+    .attr("height", height);
+
+  // Create a gradient for the legend color scale
+  const defs = svg2.append("defs");
+  const gradient = defs
+    .append("linearGradient")
+    .attr("id", "colorScaleGradient")
+    .attr("x1", "0%")
+    .attr("y1", "0%")
+    .attr("x2", "0%")
+    .attr("y2", "100%");
+
+  gradient
+    .append("stop")
+    .attr("offset", "0%")
+    .attr("stop-color", tempColorScale(20));
+
+	gradient
+    .append("stop")
+    .attr("offset", "67%")
+    .attr("stop-color", tempColorScale(0));
+
+  gradient
+    .append("stop")
+    .attr("offset", "100%")
+    .attr("stop-color", tempColorScale(-10));
+
+  // Create the legend rectangle filled with the color scale gradient
+  const legend = svg2.append("g").attr("transform", `translate(0, 40)`);
+  const legendHeight = height - 40;
+  const legendWidth = 20;
+
+  legend
+    .append("rect")
+    .attr("width", legendWidth)
+    .attr("height", legendHeight)
+    .style("fill", "url(#colorScaleGradient)")
+		.style("stroke", "black");
+
+	const labelsC = ["-10ºC","-5ºC","0ºC","5ºC","10ºC","15ºC","20ºC"];
+  // Add tick marks and labels to the legend
+  for (let index = 0; index <= 1; index += 1/7) {
+    legend
+      .append("text")
+      .attr("x", legendWidth + 5)
+      .attr("y", legendHeight * index)
+      .text(labelsC[Math.round(index*7)]);
+  }*/
+
 	var legend = [[20,1],[0,1],[-10,1]];
 	const widthLegend = 20;
 	const heightLegend = 100;
@@ -651,7 +704,7 @@ function createLegend(){
 		.attr("fill", d => tempColorScale(d[0]))
 		.attr('stroke-width', 1)
 		.attr('stroke', d => d3.rgb(tempColorScale(d[0])).darker(1))
-
+	/*
 	// Create data = list of groups
 	var allGroup = ["Celsius", "Fahrenheit"]
 	// Initialize the button
@@ -673,5 +726,5 @@ function createLegend(){
 		var selectedOption = d3.select(this).property("value")
 		// run the updateChart function with this selected option
 		updateTempUnit(unit[selectedOption]);
-	})
+	})*/
 }
