@@ -27,204 +27,6 @@ body {
     font-family: Arial, Helvetica, sans-serif;
 }
 
-#dashboard {
-    height: 100%;
-    box-sizing: border-box;
-    border: 10pt solid transparent;
-    background-clip: content-box;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-rows: minmax(0, 0.25fr) minmax(0, 2.7fr) minmax(0, 0.3fr);
-    gap: 10pt 10pt;
-    grid-auto-flow: row;
-    grid-template-areas:
-    "Top-Bar-Informational Top-Bar-Informational Top-Bar-Informational Top-Bar-Informational Top-Bar-Informational Top-Bar-Informational Top-Bar-Informational Top-Bar-Informational Top-Bar-Mode-Selector Top-Bar-Mode-Selector Top-Bar-Mode-Selector Top-Bar-Mode-Selector"
-    "Left-Col Left-Col Left-Col Left-Col Middle-Col Middle-Col Middle-Col Middle-Col Right-Col Right-Col Right-Col Right-Col"
-    "Range-Slider Range-Slider Range-Slider Range-Slider Range-Slider Range-Slider Range-Slider Range-Slider Range-Slider Range-Slider Range-Slider Range-Slider";
-
-}
-
-.Left-Col {
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-template-rows: 32% 65%;
-    gap: 3% 0pt;
-    grid-auto-flow: row;
-    grid-template-areas: "Tournament-List" "Stacked-Area";
-    grid-area: Left-Col;
-}
-
-.Tournament-List {
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-template-rows: 0.4fr minmax(0, 1.6fr);
-    gap: 0pt 0pt;
-    grid-auto-flow: row;
-    grid-template-areas: "Tournament-List-Header" "Tournament-List-Content";
-    grid-area: Tournament-List;
-    height: 100%
-}
-
-.Tournament-List-Header {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr;
-    gap: 0pt 0pt;
-    grid-auto-flow: row;
-    grid-template-areas: "Tournament-List-Header-Title" "Tournament-List-Header-Search";
-    grid-area: Tournament-List-Header;
-}
-
-.Tournament-List-Header-Search {
-    place-self: center;
-    padding-right: 5pt;
-}
-
-.Tournament-List-Content {
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-template-rows: 100%;
-    gap: 4pt 0pt;
-    grid-template-areas: "Tournament-List-Content-List";
-    grid-area: Tournament-List-Content;
-}
-
-.Tournament-List-Content-List {
-    padding: 0pt 5pt 5pt 5pt;
-}
-
-.Stacked-Area {
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-template-rows: 0.4fr 2.2fr 0.4fr;
-    gap: 5pt 0pt;
-    grid-auto-flow: row;
-    grid-template-areas: "Stacked-Area-Title" "Stacked-Area-Content" "Stacked-Area-Legend";
-    grid-area: Stacked-Area;
-}
-
-.Stacked-Area-Title {
-    display: grid;
-    grid-template-columns: 0.3fr 1fr 1fr;
-    grid-template-rows: 1fr;
-    gap: 0px 10px;
-    grid-template-areas: ". . .";
-    justify-self: start;
-    grid-area: Stacked-Area-Title;
-}
-
-.Stacked-Area-Content {
-    grid-area: Stacked-Area-Content;
-}
-
-.Stacked-Area-Legend {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: 1fr;
-    gap: 0pt 20pt;
-    grid-auto-flow: row;
-    grid-template-areas: ". . .";
-    grid-area: Stacked-Area-Legend;
-    justify-self: center;
-    margin-bottom: 8pt;
-    
-    font-family: "Roboto Light";
-}
-
-.Stacked-Area-Legend-Col2 {
-    grid-area: 1 / 2 / 2 / 4;
-}
-
-.Stacked-Area-Legend-Col3 {
-    grid-area: 1 / 3 / 2 / 4;
-}
-
-.Stacked-Area-Legend-Col1 {
-    grid-area: 1 / 1 / 2 / 2;
-}
-
-.Middle-Col {
-    display: flex;
-    grid-area: Middle-Col;
-    flex-direction: column;
-    justify-content: space-evenly;
-/*     display: grid;
-    grid-template-columns: 1fr;
-    grid-template-rows: 0.3fr 1.9fr 0.5fr 0.2fr;
-    grid-auto-columns: 1fr;
-    gap: 10pt 0pt;
-    grid-auto-flow: row;
-    grid-template-areas: "Chord-Diagram-Title" "Chord-Diagram-Content" "Chord-Diagram-Legend" "Chord-Diagram-Mode";
-    grid-area: Middle-Col; */
-}
-
-.Chord-Diagram-Title {
-    grid-area: Chord-Diagram-Title;
-}
-
-.Chord-Diagram-Content {
-    grid-area: Chord-Diagram-Content;
-}
-
-.Chord-Diagram-Mode {
-    grid-area: Chord-Diagram-Mode;
-}
-
-.Chord-Diagram-Legend{
-    min-height: 40pt;
-    margin-bottom: 20pt;
-    grid-area: Chord-Diagram-Legend;
-}
-
-.Right-Col {
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-template-rows: 0.1fr 0.1fr 1.8fr;
-    gap: 5pt 0pt;
-    grid-auto-flow: row;
-    grid-template-areas: "Bar-Chart-List-Header" "Bar-Chart-Search" "Bar-Chart-Content";
-    grid-area: Right-Col;
-}
-
-.Bar-Chart-List-Header-Sort {
-    padding-left: 4pt;
-}
-
-.Bar-Chart-List-Header {
-    display: flex;
-    align-items: center;
-}
-
-
-.Bar-Chart-Search {
-    grid-area: Bar-Chart-Search;
-    display:flex;
-    justify-content: flex-start;
-    padding: 0 20pt 0 20pt;
-    align-items: center;
-    font-family: "Roboto Light";
-}
-
-
-.Bar-Chart-Content {
-    grid-area: Bar-Chart-Content;
-    padding-left: 8pt;
-    overflow-y: scroll;
-    font-family: "Roboto Light";
-}
-
-.Range-Slider {
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr;
-    gap: 0pt 0pt;
-    grid-template-areas: ".";
-    grid-area: Range-Slider;
-    justify-content: center;
-    justify-items: center;
-    font-size: 7pt;
-}
-
 .Top-Bar-Informational {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
@@ -253,685 +55,115 @@ body {
     grid-area: Dashboard-Name;
 }
 
-.Top-Bar-Mode-Selector {
-    grid-area: Top-Bar-Mode-Selector;
-    align-content: center;
-    padding: 2pt;
-}
-
-
-/* END BASIC LAYOUT OF DASHBOARD ---------------------------------------------------- */
-
-
-/* FANCY GREY BACKGROUND SELECTOR --------------------------------------------------- */
-
-.mode-selector {
-    text-align: center;
-    width: 33.33333%;
-    height: 30pt;
-    line-height: 30pt;
-    z-index: 10;
-    position: relative;
-    font-family: "Roboto Thin";
-}
-
-#mode_selected {
-    background-color: #EDEEF2;
-    height: 100%;
-    width: 33.33333%;
-    position: relative;
-    top: -30pt;
-    z-index: 2;
-    border-radius: 11pt;
-    left: 0pt;
-}
-
-.left-button {
-    float: left;
-}
-
-.middle-button {
-    display: inline-block;
-}
-
-.right-button {
-    float: right;
-}
-
-.left2middle {
-    animation: left2middle 0.3s ease forwards;
-}
-
-@keyframes left2middle {
-    from {
-        left: 0%;
-    }
-    to {
-        left: 33.1%;
-    }
-}
-
-.left2right {
-    animation: left2right 0.3s ease forwards;
-}
-
-@keyframes left2right {
-    from {
-        left: 0%;
-    }
-    to {
-        left: 66.3%;
-    }
-}
-
-.middle2left {
-    animation: middle2left 0.3s ease forwards;
-}
-
-@keyframes middle2left {
-    from {
-        left: 33.1%;
-    }
-    to {
-        left: 0%;
-    }
-}
-
-.middle2right {
-    animation: middle2right 0.3s ease forwards;
-}
-
-@keyframes middle2right {
-    from {
-        left: 33.1%;
-    }
-    to {
-        left: 66.3%;
-    }
-}
-
-.right2left {
-    animation: right2left 0.3s ease forwards;
-}
-
-@keyframes right2left {
-    from {
-        left: 66.3%;
-    }
-    to {
-        left: 0%;
-    }
-}
-
-.right2middle {
-    animation: right2middle 0.3s ease forwards;
-}
-
-@keyframes right2middle {
-    from {
-        left: 66.3%;
-    }
-    to {
-        left: 33.1%;
-    }
-}
-
-
-/* END FANCY GREY BACKGROUND SELECTOR ----------------------------------------------- */
-
-#container {
-    position: relative;
-    height: 75vh;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-evenly;
-    column-gap: 15pt;
-    margin-top: 5pt;
-}
-
 .card {
     background-color: white;
     box-shadow: 0 4pt 8pt 0 rgba(0, 0, 0, 0.2);
     border-radius: 12pt;
 }
 
-.card-half {
-    width: 100%;
-    height: 50%;
-    background-color: white;
-    box-shadow: 0 4pt 8pt 0 rgba(0, 0, 0, 0.2);
-    border-radius: 12pt;
-}
-
-.idiom-title {
-    padding-left: 10pt;
-    font-weight: 700;
-}
-
-
-/* DROPDOWN STYLING ----------------------------------------------------------------- */
-
-
-/* Borrowed from https://codepen.io/cssinate/pen/KVdYjz */
-
-.select {
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    width: 90pt;
-    height: 30pt;
-    overflow: visible;
-    margin-top: 3pt;
-}
-
-.option {
-    padding: 0 30pt 0 10pt;
-    min-height: 15pt;
-    display: flex;
-    align-items: center;
-    border: #EDEEF2 solid 1pt;
-    box-shadow: 0 1pt 2pt 0 rgba(0, 0, 0, 0.2);
-    position: absolute;
-    top: 7pt;
-    width: 100%;
-    pointer-events: none;
-    order: 2;
-    z-index: 1;
-    background-color: white;
-    transition: background .4s ease-in-out;
-    box-sizing: border-box;
-    overflow: hidden;
-    white-space: nowrap;
-    border-radius: 20pt;
-}
-
-.option:hover {
-    background: #EDEEF2;
-}
-
-.close-tournament {
-    display:none;
-    margin-left: auto;
-}
-
-.select:focus .option {
-    position: relative;
-    pointer-events: all;
-}
-
-.cursed-mofo {
-    opacity: 0;
-    position: absolute;
-    left: -99999pt;
-}
-
-.cursed-mofo:checked+label {
-    /* Area with text next to title*/
-    order: 1;
-    z-index: 2;
-    background: white;
-    position: relative;
-    border-radius: 20pt;
-}
-
-.cursed-mofo:checked+label:after {
-    /* Dropdown symbol */
-    /* Cursed code to make down arrow */
-    content: '';
-    border-left: 5pt solid transparent;
-    border-right: 5pt solid transparent;
-    border-top: 5pt solid black;
-    position: absolute;
-    right: 7pt;
-    pointer-events: none;
-    z-index: 3;
-}
-
-.select2 {
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    width: 140pt;
-    height: 30pt;
-    overflow: visible;
-    margin-right: 10pt;
-    font-weight: 700;
-    font-size: 12pt;
-}
-
-.option2 {
-    padding: 0 30pt 0 5pt;
-    min-height: 15pt;
-    display: flex;
-    align-items: center;
-    justify-content: start;
-    border: #EDEEF2 solid 1pt;
-    box-shadow: 0 1pt 2pt 0 rgba(0, 0, 0, 0.2);
-    position: absolute;
-    top: 7pt;
-    width: 100%;
-    pointer-events: none;
-    order: 2;
-    z-index: 1;
-    background-color: white;
-    transition: background .4s ease-in-out;
-    box-sizing: border-box;
-    overflow: hidden;
-    white-space: nowrap;
-    border-radius: 20pt;
-}
-
-.option2:hover {
-    background: #EDEEF2;
-}
-
-.close-tournament {
-    display:none;
-    margin-left: auto;
-}
-
-.select2:focus .option2 {
-    position: relative;
-    pointer-events: all;
-}
-
-.cursed-mofo2 {
-    opacity: 0;
-    position: absolute;
-    left: -99999pt;
-}
-
-.cursed-mofo2:checked+label {
-    /* Area with text next to title*/
-    order: 1;
-    z-index: 2;
-    background: white;
-    position: relative;
-    border-radius: 20pt;
-}
-
-.cursed-mofo2:checked+label:after {
-    /* Dropdown symbol */
-    /* Cursed code to make down arrow */
-    content: '';
-    border-left: 5pt solid transparent;
-    border-right: 5pt solid transparent;
-    border-top: 5pt solid black;
-    position: absolute;
-    right: 4pt;
-    pointer-events: none;
-    z-index: 3;
-}
-
-
-/* END DROPDOWN STYLING ------------------------------------------------------------- */
-
-
-/* CHORD DIAGRAM -------------------------------------------------------------------- */
-
-#chord-container {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-}
-
-#color-selectors-bar {
-    width: 100%;
-    height: 40pt;
-}
-
-.color-selector {
-    text-align: center;
-    width: 33.33333%;
-    height: 100%;
-    height: 40pt;
-    z-index: 10;
-    position: relative;
-    font-family: "Roboto Thin";
-}
-
-#color_selected {
-    background-color: #EDEEF2;
-    height: 90%;
-    width: 31.5%;
-    position: relative;
-    top: -46pt;
-    z-index: 2;
-    border-radius: 11pt;
-    left: 0pt;
-    margin: 3pt;
-}
-
-#chord-legend-left{
-    float: left;
-    width: 50%;
-    height: 100%;
-    font-family: "Roboto Thin";
-    text-align: center;
-}
-
-#chord-legend-right{
-    display: inline-block;
-    width: 50%;
-    height: 100%;
-    font-family: "Roboto Thin";
-    text-align: center;
-}
-
-.chord-legend-title{
-    font-weight: bold;
-    font-size: 15pt;
-    font-family: "Roboto Bold Italic";
-    z-index: 10;
-    position: relative;
-}
-
-.chord-legend-title-container{
-    position: relative; 
-}
-
-.chord-legend-bg{
-    height: 3pt;
-    width: 80pt;
-    left: 50%;
-    transform: translateX(-42pt);
-    position: absolute;
-    z-index: 0;
-}
-
-.chord-legend-relative{
-    padding-top: 5pt;
-}
-
-.chord-legend-abs{
-    font-size: 10pt;
-}
-
-/* END CHORD DIAGRAM ---------------------------------------------------------------- */
-
 #ist-logo {
     height: 22pt;
     padding-top: 3pt;
 }
 
-
-/* STACKED AREA --------------------------------------------------------------------- */
-
-#stacked-area-box {
-    display: flex;
-    justify-content: center;
-    font-family: "Roboto Light";
-}
-
-#formats-legend {
-    position: absolute;
-    display: none;
-    height: 110pt;
-    width: 145pt;
-    background-color: white;
-    border-style: solid;
-    z-index: 500;
-    border-radius: 12pt;
-}
-
-#formats-legend-title {
-    margin-top: 5pt;
-    width: 100%;
-}
-
-#formats-legend-title-month {
-    font-family: "Roboto Thin";
-    margin-left: 10pt;
-    width: 17%;
-    float: left;
-}
-
-#formats-legend-title-year {
-    font-family: "Roboto Thin";
-    display: inline-block;
-    margin-bottom: 2pt;
-}
-
-#formats-legend-content {
-    margin-left: 10pt;
-    margin-top: 3pt;
-}
-
-.formats-legend-col {
-    width: 100%;
-}
-
-.color-col {
-    float: left;
-    height: 10pt;
-    width: 10pt;
-    margin-right: 5pt;
-}
-
-.percent-col {
-    display: inline-block;
-    width: 40pt;
-}
-
-.format-col {
-    display: inline-block;
-    width: 50pt;
-}
-
-.crown-col {
-    display: none;
-    line-height: 10pt;
-}
-
-#stacked-area-legend {
-    width: 100%;
-    height: 35pt;
-    display: flex;
-    margin-top: 10pt;
-    justify-content: center;
-    font-size: 8pt;
-    padding-left: 15pt;
-}
-
-
-
-#current-day{
-    position: absolute;
-    width: 100pt;
-    height: 100pt;
-    font-family: "Roboto Bold Italic";
-    font-size: 30pt;
+.button-container {
     text-align: center;
-    vertical-align: middle;
-    pointer-events: none;
+    margin-bottom: 5px;
 }
 
-
-/* END STACKED AREA ----------------------------------------------------------------- */
-
-
-/* TIME SLIDER ---------------------------------------------------------------------- */
-
-#slider {
-    width: 96%;
-    height: 5pt;
-    margin-top: 15pt;
-}
-
-#slider .noUi-handle {
-    height: 20pt;
-    width: 11pt;
-    right: -6pt;
-    top: -8pt;
-}
-
-.noUi-handle:before,
-.noUi-handle:after {
-    opacity: 0;
-}
-
-#slider .noUi-pips-horizontal {
-    margin-top: -10pt;
-    height: 20pt;
-}
-
-#slider .noUi-value-large {
-    margin-top: 8pt;
-}
-
-#slider .noUi-connect {
-    background-color: #02a2e6;
-    height: 5pt;
-}
-
-/* END TIME SLIDER ------------------------------------------------------------------ */
-
-
-/* TOURNAMENT LIST ------------------------------------------------------------------ */
-
-#tournament-list-container {
-    height: 100%;
-    width: 100%;
-    display: block;
-    border-bottom-left-radius: 8pt;
-    border-bottom-right-radius: 8pt;
-    background-color: #C4C4C4;
-}
-
-.clusterize-scroll {
-    max-height: 100%;
-}
-
-#tournament-list-content {
-    margin-left: 5pt;
-    margin-top: 2pt;
-}
-
-#tournament-list-content>div {
-    font-size: 9pt;
-    background-color: #C4C4C4;
-    padding: 2pt;
-    width: 90%;
-    font-family: "Roboto Light";
+.button-container button {
+    margin: 5px 5px 0px 5px;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-family: 'Roboto Thin', sans-serif;
+    border: 0.5px solid #a39e9e;
+    box-sizing: border-box;
     cursor: pointer;
-}
-
-#tournament-list-content>div:hover {
     background-color: white;
+    box-shadow: 1px 1px 1px 1px #ccc;
 }
 
-.tournament-name-selected {
-    background-color: white !important;
+.background path {
+    fill: none;
+    stroke: #ddd;
+    shape-rendering: crispEdges;
 }
 
-#search-tournaments-container {
-    margin-bottom: 10pt;
-    width: 100%;
+#legendContainer {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
 }
 
-.search {
-    width: 100%;
-    height: 20pt;
-    border: 0pt;
-    padding-left: 25pt;
-    border-bottom: 1pt solid #C4C4C4;
-    background-image: url('../img/searchicon.png');
-    background-size: 10pt 10pt;
-    background-repeat: no-repeat;
-    background-position: 5pt 4pt;
-    /*left and top*/
+.tempButton {
+    padding: 1px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 12px;
+    background-color: #FFFFFF;
 }
 
-.search:focus {
-    border-bottom: 1pt solid black;
-    outline: none;
-    /* For Chrome to behave */
+.tempButton:hover {
+    background-color: #EEEEEE;
 }
 
-*::-webkit-scrollbar {
-    width: 8pt;
+.selectedTempButton {
+    background-color: #CCCCCC;
+    cursor: default;
 }
 
-*::-webkit-scrollbar-track {
-    background: transparent;
+.selectedTempButton:hover {
+    background-color: #CCCCCC;
 }
 
-*::-webkit-scrollbar-thumb {
-    background: grey;
-}
-
-
-/* END TOURNAMENT LIST -------------------------------------------------------------- */
-
-.progress-line, .progress-line:before {
-    height: 3px;
-    width: 100%;
-    margin: 0;
-}
-.progress-line {
-    background-color: #b3d4fc;
-    display: -webkit-flex;
-    display: flex;
-}
-.progress-line:before {
-    background-color: #3f51b5;
-    content: '';
-    -webkit-animation: running-progress 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-    animation: running-progress 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
-@-webkit-keyframes running-progress {
-    0% { margin-left: 0px; margin-right: 100%; }
-    50% { margin-left: 25%; margin-right: 0%; }
-    100% { margin-left: 100%; margin-right: 0; }
-}
-@keyframes running-progress {
-    0% { margin-left: 0px; margin-right: 100%; }
-    50% { margin-left: 25%; margin-right: 0%; }
-    100% { margin-left: 100%; margin-right: 0; }
-}
-
-#progress-container {
-    width: 100vw;
-    height: 2pt;
+#tooltip {
+    font: 12px sans-serif;
+    opacity: 0;
     position: absolute;
-    z-index: 9;
-    display: flex;
-    object-fit:scale-down;
-}
-
-#progress-container > img {
-    width: 100vw;
-}
-
-#barchart-tooltip {
-    position: absolute;
-    display: none;
-    height: 50pt;
-    width: 130pt;
     background-color: white;
-    border-style: solid;
-    z-index: 500;
-    border-radius: 12pt;
+    padding: 5px;
+}
+.container {
+        display: flex;
+        flex-direction: column;
+        height: 85%; /* 100% of the viewport height */
 }
 
-#barchart-player-name-value {
-    font-family: "Roboto Thin";
-    margin-left: 10pt;
-    width: 90%;
-    float: left;
-    margin-top: 10pt;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
+.top-row {
+        flex: 1; /* Take up available space in the top row */
+        display: flex;
+        justify-content: center;
 }
 
-#barchart-wins {
-    margin-left: 10pt;
-    margin-top: 13pt;
-    font-family: "Roboto Light";
+.bottom-row {
+        flex: 1; /* Take up available space in the bottom row */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+}
+
+.box {
+    /* border: 1px solid #ccc; */
+    margin: 0px 5px 5px 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+}
+.legend{
+    width: 100px;
+}
+svg {
+    max-width: 100%;
+    max-height: 100%;
+}
+@media (max-width: 768px) {
+    .container {
+            flex-direction: column; /* Stack components on smaller screens */
+    }
+    .top-row {
+            flex: initial; /* Reset to default size */
+            margin-bottom: 10px; /* Add spacing between rows */
+    }
 }
