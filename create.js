@@ -241,7 +241,7 @@ function createParallelCoords(delays, temp) {
 		.attr("width", width + margin.left + margin.right)
 		.attr("height", height + margin.top + margin.bottom)
 	  	.append("g")
-		.attr("transform", "translate(" + -margin.left*3 + "," + margin.top + ")");
+		.attr("transform", "translate(" + -(margin.left)*4 + "," + margin.top + ")");
 	
 	// Add grey background lines for context.
 	background = svg.append("g")
@@ -393,6 +393,7 @@ function createChordDiagram(delays, temp) {
 	// #TO DO Show % of delays when you choose a region
 	
     // console.log('Inside createChordDiagram:', delays, temp);
+	const width = 550;
     const outerRadius = width * 0.35 - 40;
     const innerRadius = outerRadius - 20;
     const svg = d3
@@ -401,7 +402,7 @@ function createChordDiagram(delays, temp) {
 			.attr("width", width)
 			.attr("height", height)
 			.append("g")
-			.attr("transform", `translate(${width / 2},${(height) / 2})`);
+			.attr("transform", `translate(${(width / 2)-margin.left},${(height) / 2})`);
 
     // Create a matrix of the delays between regions
 		const delaysMatrix = globalRegions.map((sourceRegion) =>

@@ -413,6 +413,7 @@ function updateChordDiagram(delays, temp) {
 	// console.log('Inside updateChordDiagram:', delays, temp);
 	const svg = d3.select("#chordDiagram").select("svg").select("g");
 	svg.selectAll("*").remove(); 
+	const width = 550;
     const outerRadius = width * 0.35 - 40;
     const innerRadius = outerRadius - 20;
 
