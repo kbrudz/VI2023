@@ -366,7 +366,7 @@ function createParallelCoords(delays, temp) {
 	function brushing(event) {
 		for(var i=0;i<dimensions.length;++i){
 			if(event.target==yParallel[dimensions[i]].brush) {
-				console.log("yPar",yParallel[dimensions[i]], "\ninvert",yParallel[dimensions[i]].invert);
+				// console.log("yPar",yParallel[dimensions[i]], "\ninvert",yParallel[dimensions[i]].invert);
 				  extents[i]=event.selection.map(yParallel[dimensions[i]].invert,yParallel[dimensions[i]]);
 				  }
 		}
@@ -469,7 +469,7 @@ function createChordDiagram(delays, temp) {
         .style("stroke", (d) => regionColors[globalRegions[d.index]])
         .attr("d", arc)
         .style("cursor", "pointer")
-				.on("click", handleClick)
+				.on("click", (d) => updateIdioms(globalRegions[d.index]))
         .on("mouseover", handleMouseOver)
         .on("mouseout", handleMouseOut);
 
@@ -510,21 +510,6 @@ function createChordDiagram(delays, temp) {
 		.attr("font-weight",900)
 		.text((d) => globalRegions[d.index]);
 
-	function handleClick(event, d) {
-		updateIdioms(globalRegions[d.index]);
-		/*
-		const groups = svg.selectAll("g.group");
-		groups.select("path")
-			.style("stroke", (d) => regionColors[regions[d.index]])
-			.style("stroke-width", null);
-	
-		const selectedGroup = groups.filter((groupData) => groupData.index === d.index);
-		selectedGroup.select("path")
-			.style("stroke", "#fbfe88")  
-			.style("stroke-width", 3); 
-		*/
-	}
-
 	// Function implemented in linked.js
 	// function handleMouseOver(event, d) {
 	// 		const tooltip = d3.select("#tooltip");
@@ -542,130 +527,7 @@ function createChordDiagram(delays, temp) {
 
 		d3.selectAll("path.chord").attr("opacity", 0.8);
 }
-// function createSunburst(delays, svg){
-// 	const radius = width * 0.38 - 40;
-
-// 	const aux = d3.groups(delays, d => stateToRegion[d.ORIGIN_STATE], d => d.ORIGIN_AIRPORT, d => d.DEP_DELAY);
-// 	const hierarchyDataAux = [{"code":"northeast", "children":[]},
-// 		 {"code":"west", "children":[]},
-// 		 {"code":"south", "children":[]},
-// 		 {"code":"midwest", "children":[]}]; // regions
-// 	console.log(aux);
-
-// 	aux.forEach(d => {
-// 		console.log("d:",d);
-// 		hierarchyDataAux.forEach(r => {
-// 			if (d[0] == r.code){
-// 				d[1].forEach(h => {
-// 					var delay1=0;
-// 					h[1].forEach(de => {delay1 += +de[0];})
-// 					console.log(h[0], delay1);
-// 					r.children.push({"code":h[0], "value":delay1})
-// 				});
-// 			}
-// 		})
-// 	});
-
-// 	hierarchyData = {"code":"REGION", "children":hierarchyDataAux};
-	
-// 	console.log(hierarchyData);
-// 	 // Create a partition layout for the sunburst
-// 	 const partition = data => {
-// 		const root = d3.hierarchy(data)
-// 			.sum(d => d.value)
-// 			.sort((a, b) => b.value - a.value);
-// 		return d3.partition().size([2 * Math.PI, root.height + 1])(root);
-// 	};
-
-// 	console.log("arc")
-// 	// Create an arc generator for drawing the sunburst segments
-// 	const arc = d3.arc()
-// 		.startAngle(d => d.x0)
-// 		.endAngle(d => d.x1)
-// 		.padAngle(0.01)
-// 		.padRadius(radius * 1.5)
-// 		.innerRadius(d => d.y0 * radius)
-// 		.outerRadius(d => Math.max(d.y0 * radius, d.y1 * radius - 1));
-
-// 	const root = partition(hierarchyData);
-// 	console.log("root", root)
-
-// 	// Create a path for each sunburst segment
-// 	const path = svg.selectAll("path")
-// 		.data(root.descendants())
-// 		.enter()
-// 		.append("path")
-// 		.attr("d", arc)
-// 		.attr("fill", "blue");
-
-// 	// Add text labels to the sunburst segments
-// 	svg.selectAll("text")
-// 		.data(root.descendants())
-// 		.enter()
-// 		.append("text")
-// 		.attr("transform", d => {
-// 			const x = (d.x0 + d.x1) / 2 * 180 / Math.PI;
-// 			const y = (d.y0 + d.y1) / 2 * radius;
-// 			return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
-// 		})
-// 		.attr("dy", "0.35em")
-// 		.text(d => {console.log("adding text labels",d); return d.data.code});
-// }
-function createLegend() {
-	/*// Create a legend for the heatmap
-  const svg2 = d3
-    .select("#legend")
-    .append("svg")
-    .attr("width", width * 0.2)
-    .attr("height", height);
-
-  // Create a gradient for the legend color scale
-  const defs = svg2.append("defs");
-  const gradient = defs
-    .append("linearGradient")
-    .attr("id", "colorScaleGradient")
-    .attr("x1", "0%")
-    .attr("y1", "0%")
-    .attr("x2", "0%")
-    .attr("y2", "100%");
-
-  gradient
-    .append("stop")
-    .attr("offset", "0%")
-    .attr("stop-color", tempColorScale(20));
-
-	gradient
-    .append("stop")
-    .attr("offset", "67%")
-    .attr("stop-color", tempColorScale(0));
-
-  gradient
-    .append("stop")
-    .attr("offset", "100%")
-    .attr("stop-color", tempColorScale(-10));
-
-  // Create the legend rectangle filled with the color scale gradient
-  const legend = svg2.append("g").attr("transform", `translate(0, 40)`);
-  const legendHeight = height - 40;
-  const legendWidth = 20;
-
-  legend
-    .append("rect")
-    .attr("width", legendWidth)
-    .attr("height", legendHeight)
-    .style("fill", "url(#colorScaleGradient)")
-		.style("stroke", "black");
-
-	const labelsC = ["-10ºC","-5ºC","0ºC","5ºC","10ºC","15ºC","20ºC"];
-  // Add tick marks and labels to the legend
-  for (let index = 0; index <= 1; index += 1/7) {
-    legend
-      .append("text")
-      .attr("x", legendWidth + 5)
-      .attr("y", legendHeight * index)
-      .text(labelsC[Math.round(index*7)]);
-  }*/
-
+function createLegend(){
 	var legend = [[20,1],[0,1],[-10,1]];
 	const widthLegend = 20;
 	const heightLegend = 100;
@@ -700,7 +562,7 @@ function createLegend() {
 		.attr("x", function(d) { return xLegend(d[0]); })
 		.attr("y", function(d) { return yLegend(d[1]); })
 		.attr("width", xLegend.bandwidth())
-		.attr("height", function(d) {console.log(tempColorScale(d[0]),d3.rgb(tempColorScale(d[0])).darker(1)); return widthLegend - yLegend(d[1]); })
+		.attr("height", function(d) {return widthLegend - yLegend(d[1]); })
 		.attr("fill", d => tempColorScale(d[0]))
 		.attr('stroke-width', 1)
 		.attr('stroke', d => d3.rgb(tempColorScale(d[0])).darker(1))
